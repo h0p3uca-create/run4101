@@ -53,13 +53,13 @@ function tierSpec(tier: Opponent['tier']): TierSpec {
 export const OPPONENTS: Opponent[] = ROSTER.flatMap((group) =>
   group.names.map((name, i): Opponent => {
     const spec = tierSpec(group.tier);
-    // deterministic ±3 jitter so clubs within a tier differ
-    const j = ((i * 7) % 7) - 3;
+    // deterministic ±3 jitter so clubs within a tier differ (multipliers
+    // coprime to 7 so the modulo actually varies per index)
     return {
       id: name.toLowerCase().replace(/[^a-z]+/g, '-'),
       name,
-      attack: spec.attack + j,
-      defense: spec.defense + (((i * 5) % 7) - 3),
+      attack: spec.attack + (((i * 5) % 7) - 3),
+      defense: spec.defense + (((i * 3) % 7) - 3),
       tier: group.tier,
     };
   }),

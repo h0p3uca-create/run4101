@@ -48,14 +48,22 @@ function playMatch(
   team: TeamStrength,
   opp: Opponent,
   home: boolean,
-  rng: Rng,
+  baseSeed: string,
+  matchIdx: number,
 ): MatchResult {
   const lambdaFor = expectedGoals(team.attack, opp.defense, home);
   const lambdaAgainst = expectedGoals(opp.attack, team.defense, !home);
 
-  const goalsFor = Math.min(samplePoisson(lambdaFor, rng), ENGINE.MAX_GOALS);
+  // Independent sub-streams per quantity so the variable draw count of one
+  // Poisson sample can't shift another's distribution (goals for/against and
+  // scorers stay statistically independent).
+  const rngFor = rngFromSeed(`${baseSeed}|m${matchIdx}|gf`);
+  const rngAgainst = rngFromSeed(`${baseSeed}|m${matchIdx}|ga`);
+  const rngScorers = rngFromSeed(`${baseSeed}|m${matchIdx}|sc`);
+
+  const goalsFor = Math.min(samplePoisson(lambdaFor, rngFor), ENGINE.MAX_GOALS);
   const goalsAgainst = Math.min(
-    samplePoisson(lambdaAgainst, rng),
+    samplePoisson(lambdaAgainst, rngAgainst),
     ENGINE.MAX_GOALS,
   );
 
@@ -71,7 +79,7 @@ function playMatch(
     goalsAgainst,
     outcome,
     points,
-    scorers: pickScorers(xi, goalsFor, rng),
+    scorers: pickScorers(xi, goalsFor, rngScorers),
   };
 }
 
@@ -93,13 +101,14 @@ export function simulateSeason(
   }
 
   const team = teamStrength(xi);
-  const rng = rngFromSeed(`${seed}|${xi.map((p) => p.id).join(',')}`);
+  const baseSeed = `${seed}|${xi.map((p) => p.id).join(',')}`;
 
   const matches: MatchResult[] = [];
+  let matchIdx = 0;
   for (let leg = 0; leg < SEASON.matchesPerOpponent; leg++) {
     const home = leg === 0;
     for (const opp of opponents) {
-      matches.push(playMatch(xi, team, opp, home, rng));
+      matches.push(playMatch(xi, team, opp, home, baseSeed, matchIdx++));
     }
   }
 
