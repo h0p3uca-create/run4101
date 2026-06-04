@@ -7,6 +7,7 @@ import {
   reroll as rerollDraw,
   pick as pickPlayer,
   moveTo,
+  removeFrom,
   lineup,
   type RollState,
   type BuildMode,
@@ -101,6 +102,8 @@ export default function Game() {
   const onReroll = () => build && setBuild(rerollDraw(build));
   const onPick = (id: string) => build && setBuild(pickPlayer(build, id));
   const onMove = (from: string, to: string) => build && setBuild(moveTo(build, from, to));
+  const onRemove = (slotId: string) => build && setBuild(removeFrom(build, slotId));
+  const onRestart = () => build && startSeed(mode, seasonId, formationId, seed);
 
   function onSimulate() {
     if (!build) return;
@@ -158,6 +161,8 @@ export default function Game() {
           onReroll={onReroll}
           onPick={onPick}
           onMove={onMove}
+          onRemove={onRemove}
+          onRestart={onRestart}
           onSimulate={onSimulate}
         />
       )}

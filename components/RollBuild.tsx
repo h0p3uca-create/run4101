@@ -20,6 +20,8 @@ export default function RollBuild({
   onReroll,
   onPick,
   onMove,
+  onRemove,
+  onRestart,
   onSimulate,
 }: {
   state: RollState;
@@ -27,6 +29,8 @@ export default function RollBuild({
   onReroll: () => void;
   onPick: (id: string) => void;
   onMove: (fromSlotId: string, toSlotId: string) => void;
+  onRemove: (slotId: string) => void;
+  onRestart: () => void;
   onSimulate: () => void;
 }) {
   const [selected, setSelected] = useState<string | null>(null);
@@ -72,6 +76,15 @@ export default function RollBuild({
             <p className="text-sm font-bold">
               {done ? 'Ready' : need ? `Need ${need}` : ''}
             </p>
+            {placedCount(state) > 0 && (
+              <button
+                data-testid="restart"
+                onClick={() => { setSelected(null); onRestart(); }}
+                className="mt-0.5 text-[10px] uppercase tracking-wider text-[var(--color-muted)] hover:text-[var(--color-accent-2)]"
+              >
+                ↻ start over
+              </button>
+            )}
           </div>
           <div className="text-right">
             <p className="text-[10px] uppercase tracking-wider text-[var(--color-muted)]">str</p>
@@ -163,11 +176,23 @@ export default function RollBuild({
           highlightSlotIds={highlight}
           onSlotClick={handleSlotClick}
         />
-        <p className="text-center text-[11px] text-[var(--color-muted)]">
-          {selected
-            ? 'Tap a glowing slot to move · tap again to cancel'
-            : 'Tap a placed player to move them to another position'}
-        </p>
+        {selected && state.placed[selected] ? (
+          <div className="flex items-center justify-center gap-2 text-[11px]">
+            <span className="font-semibold">{state.placed[selected].name}</span>
+            <span className="text-[var(--color-muted)]">— tap a glowing slot to move,</span>
+            <button
+              data-testid="remove"
+              onClick={() => { onRemove(selected); setSelected(null); }}
+              className="rounded-full border border-[var(--color-accent-2)] px-2 py-0.5 font-semibold text-[var(--color-accent-2)] hover:bg-[color-mix(in_srgb,var(--color-accent-2)_12%,transparent)]"
+            >
+              ✕ remove
+            </button>
+          </div>
+        ) : (
+          <p className="text-center text-[11px] text-[var(--color-muted)]">
+            Tap a placed player to move or remove them
+          </p>
+        )}
       </div>
 
       {/* Right: box score */}
