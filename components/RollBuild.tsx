@@ -34,8 +34,16 @@ export default function RollBuild({
 }) {
   const [selected, setSelected] = useState<string | null>(null);
   const done = isComplete(state);
-  const str = strengthOf(state);
-  const need = [...new Set(openSlots(state).map((s) => s.pos))].join(' · ');
+  // strength + open positions only depend on the placed XI, not on `selected`
+  const str = useMemo(() => strengthOf(state), [state.placed, state.formation]);
+  const need = useMemo(
+    () => [...new Set(openSlots(state).map((s) => s.pos))].join(' · '),
+    [state.placed, state.formation],
+  );
+  const drawnSorted = useMemo(
+    () => (state.drawn ? [...state.drawn.squad].sort((a, b) => b.rating - a.rating) : []),
+    [state.drawn],
+  );
 
   const highlight = useMemo(() => {
     if (!selected) return [];
@@ -136,9 +144,7 @@ export default function RollBuild({
               Pick a player
             </p>
             <div className="max-h-[44vh] overflow-y-auto rounded-[var(--radius)] border border-[var(--card-line)] bg-[var(--card)]">
-              {[...state.drawn.squad]
-                .sort((a, b) => b.rating - a.rating)
-                .map((p) => {
+              {drawnSorted.map((p) => {
                   const ok = canPick(state, p);
                   return (
                     <button

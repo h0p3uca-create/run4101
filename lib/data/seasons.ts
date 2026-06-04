@@ -45,10 +45,6 @@ export async function loadSeason(id: string): Promise<Season> {
   return season;
 }
 
-export async function loadAllSeasons(): Promise<Season[]> {
-  return Promise.all(SEASONS_INDEX.map((m) => loadSeason(m.id)));
-}
-
 // ── pure helpers operating on a loaded Season ─────────────────
 
 /** Flatten a season's squads into one draft pool, tagging each with its club. */
