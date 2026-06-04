@@ -27,8 +27,10 @@ export default function Pitch({
   highlightSlotIds?: string[];
   onSlotClick?: (slotId: string) => void;
 }) {
+  const interactive = !!onSlotClick;
   return (
     <div
+      aria-hidden={interactive ? undefined : true}
       className="relative mx-auto aspect-[3/4] w-full max-w-md overflow-hidden rounded-2xl shadow-lg ring-1 ring-black/20 lg:max-w-lg"
       style={{
         backgroundImage:
@@ -52,6 +54,13 @@ export default function Pitch({
             key={slot.id}
             data-testid={`slot-${slot.id}`}
             onClick={() => onSlotClick?.(slot.id)}
+            tabIndex={interactive ? undefined : -1}
+            aria-pressed={player ? isSelected : undefined}
+            aria-label={
+              player
+                ? `${slot.pos}: ${player.name}, rating ${player.rating}${isSelected ? ', selected' : ''}`
+                : `${slot.pos} slot, empty${isHighlight ? ', valid move target' : ''}`
+            }
             className="absolute flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-0.5 transition-transform active:scale-95"
             style={{ left: `${slot.x}%`, top: `${slot.y}%` }}
           >

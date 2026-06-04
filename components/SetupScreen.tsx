@@ -131,6 +131,7 @@ export default function SetupScreen({ onStart }: { onStart: (o: StartOptions) =>
       <div className="mt-10 border-t border-[var(--card-line)] pt-5">
         <button
           data-testid="toggle-challenges"
+          aria-expanded={showChallenges}
           onClick={() => setShowChallenges((s) => !s)}
           className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[var(--color-muted)] hover:text-[var(--fg)]"
         >

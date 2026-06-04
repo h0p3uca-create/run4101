@@ -14,7 +14,14 @@ function Bar({ label, value, color }: { label: string; value: number; color: str
           {value || '–'}
         </span>
       </div>
-      <div className="h-1.5 w-full overflow-hidden rounded-full bg-[color-mix(in_srgb,var(--fg)_10%,transparent)]">
+      <div
+        role="progressbar"
+        aria-label={`${label} strength`}
+        aria-valuenow={value}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        className="h-1.5 w-full overflow-hidden rounded-full bg-[color-mix(in_srgb,var(--fg)_10%,transparent)]"
+      >
         <div className="h-full rounded-full transition-all" style={{ width: `${value}%`, background: color }} />
       </div>
     </div>

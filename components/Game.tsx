@@ -141,6 +141,7 @@ export default function Game() {
       >
         <button
           onClick={() => setPhase('setup')}
+          aria-label="Gofor101 — back to start"
           className="text-xl font-black tracking-tight"
           style={{ fontFamily: 'var(--font-display)' }}
         >
@@ -157,7 +158,11 @@ export default function Game() {
       </header>
 
       {loading && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--bg)]/80 backdrop-blur-sm">
+        <div
+          role="status"
+          aria-live="polite"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--bg)]/80 backdrop-blur-sm"
+        >
           <p className="animate-pulse text-sm uppercase tracking-widest text-[var(--color-muted)]">
             Drawing squads…
           </p>

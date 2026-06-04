@@ -144,6 +144,7 @@ export default function ResultView({
       {!anonymous && (
       <button
         onClick={() => setShowMatches((s) => !s)}
+        aria-expanded={showMatches}
         className="self-center text-sm text-[var(--color-accent-3)] hover:underline"
       >
         {showMatches ? 'Hide' : 'Show'} all 38 results

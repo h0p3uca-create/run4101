@@ -30,6 +30,11 @@
   --fg: var(--color-pl-ink);
   --card: #ffffff;
   --card-line: #e7e1ec;
+  /* Light theme: the neon accents are illegible as TEXT on paper (~1.2:1),
+     so override with AA-passing darker variants. Dark theme keeps the neon. */
+  --color-accent: #058a4a;   /* green, ~4.5:1 on paper */
+  --color-accent-3: #0a7f8c; /* cyan,  ~4.5:1 on paper */
+  --color-muted: #65607a;    /* ~4.6:1 on paper */
 }
 
 .dark {
@@ -37,9 +42,19 @@
   --fg: var(--color-paper);
   --card: #2a0530;
   --card-line: var(--color-line);
+  --color-accent: #00ff85;
+  --color-accent-3: #04f5ff;
+  --color-muted: #8b8294;
 }
 
 html { color-scheme: light dark; }
+
+/* Keyboard focus — critical for a keyboard-playable game */
+:focus-visible {
+  outline: 2px solid var(--color-accent-3);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
 
 body {
   background: var(--bg);
