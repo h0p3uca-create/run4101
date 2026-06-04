@@ -24,7 +24,10 @@ const OUT = join('lib', 'data', 'seasons');
 interface SeasonSource {
   id: string;
   label: string;
-  fifaCsv: string;
+  /** Relative path under FIFA_RAW (amanthedorkknight mirror). */
+  fifaCsv?: string;
+  /** Or a full CSV URL (other mirrors / editions). */
+  fifaUrl?: string;
   winnerPts: number; // real champion points (flavor: "they got X, get 101")
 }
 
@@ -32,6 +35,12 @@ const SEASONS: SeasonSource[] = [
   { id: '2017-18', label: '2017/18 · The Centurions', fifaCsv: 'Complete/CompleteDataset.csv', winnerPts: 100 },
   { id: '2018-19', label: '2018/19 · 98 vs 97', fifaCsv: '2019/data.csv', winnerPts: 98 },
   { id: '2020-21', label: '2020/21 · City reclaim it', fifaCsv: '2021/data.csv', winnerPts: 86 },
+  {
+    id: '2022-23',
+    label: '2022/23 · The Treble',
+    fifaUrl: 'https://raw.githubusercontent.com/miraehab/FIFA-23-ML-Project/main/players_fifa23.csv',
+    winnerPts: 89,
+  },
 ];
 
 type Position = 'GK' | 'DEF' | 'MID' | 'FWD';
@@ -147,7 +156,7 @@ function clubKey(name: string): string {
 
 // ── FIFA position → group ──────────────────────────────────────
 function posGroup(raw: string): Position {
-  const p = (raw || '').trim().toUpperCase().split(/\s+/)[0]; // "ST LW" → "ST"
+  const p = (raw || '').trim().toUpperCase().split(/[\s,]+/)[0]; // "ST LW" / "CM,CAM" → first
   if (p === 'GK') return 'GK';
   if (/(CB|LB|RB|WB)/.test(p)) return 'DEF';
   if (/(CM|DM|AM|LM|RM|^M$)/.test(p)) return 'MID';
@@ -219,7 +228,8 @@ async function build() {
 
     const clubKeys = new Map(table.map((c, i) => [clubKey(c.club), { row: c, pos: i }]));
 
-    const fifaText = await cachedFetch(`${FIFA_RAW}/${src.fifaCsv}`, `fifa-${src.id}.csv`);
+    const fifaUrl = src.fifaUrl ?? `${FIFA_RAW}/${src.fifaCsv}`;
+    const fifaText = await cachedFetch(fifaUrl, `fifa-${src.id}.csv`);
     const rows = parseCsv(fifaText);
 
     // group players by club (only PL clubs of this season)
@@ -228,7 +238,9 @@ async function build() {
       const club = field(r, 'Club');
       const key = clubKey(club);
       if (!clubKeys.has(key)) continue;
-      const pos = posGroup(field(r, 'Position', 'Preferred Positions', 'player_positions'));
+      const pos = posGroup(
+        field(r, 'Position', 'BestPosition', 'Positions', 'Preferred Positions', 'player_positions'),
+      );
       const overall = num(field(r, 'Overall', 'overall'));
       if (overall < 40) continue;
       const isGk = pos === 'GK';

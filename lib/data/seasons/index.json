@@ -19,5 +19,12 @@
     "clubs": 20,
     "players": 480,
     "winnerPts": 86
+  },
+  {
+    "id": "2022-23",
+    "label": "2022/23 · The Treble",
+    "clubs": 20,
+    "players": 480,
+    "winnerPts": 89
   }
 ]

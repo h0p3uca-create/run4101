@@ -3,12 +3,14 @@ import index from './seasons/index.json';
 import s201718 from './seasons/2017-18.json';
 import s201819 from './seasons/2018-19.json';
 import s202021 from './seasons/2020-21.json';
+import s202223 from './seasons/2022-23.json';
 
 // Static imports so the bundler ships the JSON (works with static export).
 const SEASON_MAP: Record<string, Season> = {
   '2017-18': s201718 as Season,
   '2018-19': s201819 as Season,
   '2020-21': s202021 as Season,
+  '2022-23': s202223 as Season,
 };
 
 export const SEASONS_INDEX = index as SeasonMeta[];
