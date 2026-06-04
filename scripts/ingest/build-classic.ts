@@ -61,8 +61,16 @@ const POS_MAP: Record<string, string> = {
   'second striker': 'CF', 'centre-forward': 'ST', 'forward': 'ST',
   'defender': 'CB', 'midfield': 'CM', 'midfielder': 'CM', 'attack': 'ST', 'striker': 'ST',
 };
-function mapPos(main: string, coarse: string): string {
-  return POS_MAP[(main || '').trim().toLowerCase()] ?? POS_MAP[(coarse || '').trim().toLowerCase()] ?? 'CM';
+// Transfermarkt `position` is granular ("Defender - Left-Back"); `main_position`
+// is the coarse group ("Defender"). Prefer the specific part.
+function mapPos(positionField: string, mainField: string): string {
+  const p = positionField || '';
+  const specific = p.includes(' - ') ? p.split(' - ').pop()!.trim() : p.trim();
+  return (
+    POS_MAP[specific.toLowerCase()] ??
+    POS_MAP[(mainField || '').trim().toLowerCase()] ??
+    'CM'
+  );
 }
 
 function attDef(code: string, r: number): { att: number; def: number } {
@@ -162,7 +170,7 @@ async function main() {
       const rawName = c[idx['player_name']] || c[idx['name_in_home_country']] || 'Unknown';
       profile.set(pid, {
         name: rawName.replace(/\s*\(\d+\)\s*$/, '').trim() || 'Unknown',
-        pos: mapPos(c[idx['main_position']] ?? '', c[idx['position']] ?? ''),
+        pos: mapPos(c[idx['position']] ?? '', c[idx['main_position']] ?? ''),
       });
     }
   }
