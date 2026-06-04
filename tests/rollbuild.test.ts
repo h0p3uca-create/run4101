@@ -4,7 +4,9 @@ import {
   roll,
   reroll,
   pick,
+  pickInto,
   moveTo,
+  moveTargets,
   canPick,
   eligibleOpenSlots,
   openSlots,
@@ -91,7 +93,34 @@ describe('rollbuild · roll & pick onto slots', () => {
   });
 });
 
-describe('rollbuild · move between eligible slots', () => {
+describe('rollbuild · pick into a specific slot', () => {
+  it('places a player into the chosen eligible slot (not just best-fit)', () => {
+    let s = roll(fresh('4-3-3'));
+    // find an eligible (player, open slot) pair from the draw
+    const p = s.drawn!.squad.find((pl) => canPick(s, pl))!;
+    const slot = eligibleOpenSlots(s, p).at(-1)!; // a non-primary eligible slot when available
+    s = pickInto(s, p.id, slot.id);
+    expect(s.placed[slot.id].name).toBe(p.name);
+    expect(s.drawn).toBeNull();
+    expect(s.takenNames.has(p.name)).toBe(true);
+  });
+
+  it('rejects an ineligible slot or an already-filled slot', () => {
+    let s = roll(fresh('4-3-3'));
+    const p = s.drawn!.squad.find((pl) => canPick(s, pl))!;
+    const bad = s.formation.lineup.find((sl) => !eligible(p, sl));
+    if (bad) expect(() => pickInto(s, p.id, bad.id)).toThrow();
+    const good = eligibleOpenSlots(s, p)[0];
+    s = pickInto(s, p.id, good.id);
+    const p2 = s.drawn ? null : roll(s).drawn!.squad.find((pl) => canPick(roll(s), pl));
+    if (p2) {
+      const s2 = roll(s);
+      expect(() => pickInto(s2, p2.id, good.id)).toThrow(); // slot already filled
+    }
+  });
+});
+
+describe('rollbuild · move and swap between eligible slots', () => {
   it('moves a placed player to another eligible empty slot', () => {
     // place a central midfielder, then move across the midfield line
     let s = roll(fresh());
@@ -106,6 +135,34 @@ describe('rollbuild · move between eligible slots', () => {
     const moved = moveTo(s, fromId, otherCm.id);
     expect(moved.placed[otherCm.id].name).toBe(cm.name);
     expect(moved.placed[fromId]).toBeUndefined();
+  });
+
+  it('moveTargets only lists slots that are eligible (and swap-valid both ways)', () => {
+    let s = roll(fresh('4-3-3'));
+    const p = s.drawn!.squad.find((pl) => canPick(s, pl))!;
+    const slot = eligibleOpenSlots(s, p)[0];
+    s = pickInto(s, p.id, slot.id);
+    for (const t of moveTargets(s, slot.id)) {
+      expect(t.id).not.toBe(slot.id);
+      expect(eligible(p, t)).toBe(true);
+      const occ = s.placed[t.id];
+      const fromSlot = s.formation.lineup.find((x) => x.id === slot.id)!;
+      if (occ) expect(eligible(occ, fromSlot)).toBe(true);
+    }
+  });
+
+  it('swaps two eligible occupied slots, preserving both players', () => {
+    // build a full XI, then swap two same-line slots that are mutually eligible
+    const s = autoBuild(fresh('4-3-3'));
+    const cmSlots = s.formation.lineup.filter((sl) => sl.pos === 'CM');
+    if (cmSlots.length < 2) return;
+    const [a, b] = cmSlots;
+    const pa = s.placed[a.id], pb = s.placed[b.id];
+    if (!eligible(pa, b) || !eligible(pb, a)) return;
+    const swapped = moveTo(s, a.id, b.id);
+    expect(swapped.placed[b.id].name).toBe(pa.name);
+    expect(swapped.placed[a.id].name).toBe(pb.name);
+    expect(lineup(swapped)).toHaveLength(11); // nobody dropped
   });
 });
 

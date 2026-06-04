@@ -6,6 +6,7 @@ import {
   roll as rollDraw,
   reroll as rerollDraw,
   pick as pickPlayer,
+  pickInto as pickPlayerInto,
   moveTo,
   removeFrom,
   lineup,
@@ -107,6 +108,8 @@ export default function Game() {
   const onRoll = () => build && setBuild(rollDraw(build));
   const onReroll = () => build && setBuild(rerollDraw(build));
   const onPick = (id: string) => build && setBuild(pickPlayer(build, id));
+  const onPickInto = (id: string, slotId: string) =>
+    build && setBuild(pickPlayerInto(build, id, slotId));
   const onMove = (from: string, to: string) => build && setBuild(moveTo(build, from, to));
   const onRemove = (slotId: string) => build && setBuild(removeFrom(build, slotId));
   const onRestart = () => build && startSeed(mode, seasonId, formationId, seed);
@@ -192,6 +195,7 @@ export default function Game() {
           onRoll={onRoll}
           onReroll={onReroll}
           onPick={onPick}
+          onPickInto={onPickInto}
           onMove={onMove}
           onRemove={onRemove}
           onRestart={onRestart}

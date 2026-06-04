@@ -4,6 +4,7 @@ import {
   type RollState,
   openSlots,
   eligibleOpenSlots,
+  moveTargets as moveTargetsFor,
   canPick,
   isComplete,
   strengthOf,
@@ -18,6 +19,7 @@ export default function RollBuild({
   onRoll,
   onReroll,
   onPick,
+  onPickInto,
   onMove,
   onRemove,
   onRestart,
@@ -27,48 +29,82 @@ export default function RollBuild({
   onRoll: () => void;
   onReroll: () => void;
   onPick: (id: string) => void;
+  onPickInto: (id: string, slotId: string) => void;
   onMove: (fromSlotId: string, toSlotId: string) => void;
   onRemove: (slotId: string) => void;
   onRestart: () => void;
   onSimulate: () => void;
 }) {
+  // Two mutually-exclusive selections:
+  //  - `selected`  : a PLACED player chosen to move / swap / remove
+  //  - `targetSlot`: an EMPTY slot chosen to fill from the draw (slot-first pick)
   const [selected, setSelected] = useState<string | null>(null);
+  const [targetSlot, setTargetSlot] = useState<string | null>(null);
   const done = isComplete(state);
-  // strength + open positions only depend on the placed XI, not on `selected`
+  // strength + open positions only depend on the placed XI, not on selection
   const str = useMemo(() => strengthOf(state), [state.placed, state.formation]);
   const need = useMemo(
     () => [...new Set(openSlots(state).map((s) => s.pos))].join(' · '),
     [state.placed, state.formation],
   );
-  const drawnSorted = useMemo(
-    () => (state.drawn ? [...state.drawn.squad].sort((a, b) => b.rating - a.rating) : []),
-    [state.drawn],
+
+  // The targeted empty slot, resolved to its Slot (cleared once it's no longer open).
+  const targetSlotObj = useMemo(
+    () =>
+      targetSlot
+        ? state.formation.lineup.find((s) => s.id === targetSlot && !state.placed[s.id]) ?? null
+        : null,
+    [targetSlot, state.formation, state.placed],
   );
 
-  const highlight = useMemo(() => {
-    if (!selected) return [];
-    const player = state.placed[selected];
-    if (!player) return [];
-    return state.formation.lineup
-      .filter((s) => s.id !== selected && !state.placed[s.id] && eligible(player, s))
-      .map((s) => s.id);
-  }, [selected, state]);
+  // Drawn squad, best first. When a slot is targeted, eligible-for-that-slot players float up.
+  const drawnSorted = useMemo(() => {
+    if (!state.drawn) return [];
+    const squad = [...state.drawn.squad];
+    if (targetSlotObj) {
+      return squad.sort((a, b) => {
+        const ea = eligible(a, targetSlotObj) ? 0 : 1;
+        const eb = eligible(b, targetSlotObj) ? 0 : 1;
+        return ea - eb || b.rating - a.rating;
+      });
+    }
+    return squad.sort((a, b) => b.rating - a.rating);
+  }, [state.drawn, targetSlotObj]);
+
+  // Empty + swap-eligible slots the selected placed player can move into.
+  const highlight = useMemo(
+    () => (selected ? moveTargetsFor(state, selected).map((s) => s.id) : []),
+    [selected, state],
+  );
 
   function handleSlotClick(slotId: string) {
-    const isPlaced = !!state.placed[slotId];
-    if (isPlaced) {
-      setSelected((cur) => (cur === slotId ? null : slotId));
-    } else if (selected && highlight.includes(slotId)) {
-      onMove(selected, slotId);
-      setSelected(null);
+    const clickedPlayer = state.placed[slotId];
+
+    // A placed player is selected → resolve the click against it.
+    if (selected) {
+      if (slotId === selected) { setSelected(null); return; }        // tap self → deselect
+      if (highlight.includes(slotId)) { onMove(selected, slotId); setSelected(null); return; }
+      // not a valid move/swap target: reselect a placed player, else clear
+      if (clickedPlayer) { setSelected(slotId); setTargetSlot(null); }
+      else { setSelected(null); }
+      return;
+    }
+
+    // Nothing selected.
+    if (clickedPlayer) {
+      setSelected(slotId);          // pick a placed player to move/swap/remove
+      setTargetSlot(null);
     } else {
-      setSelected(null);
+      setTargetSlot((cur) => (cur === slotId ? null : slotId)); // target an empty slot
     }
   }
 
+  // Picking from the draw: into the targeted slot if one is set, else best-fit.
   function handlePick(id: string) {
-    onPick(id);
+    if (targetSlotObj) onPickInto(id, targetSlotObj.id);
+    else onPick(id);
     setSelected(null);
+    setTargetSlot(null);
   }
 
   return (
@@ -140,12 +176,26 @@ export default function RollBuild({
             >
               ↺ Another club · {state.rerollsLeft} left
             </button>
-            <p className="pt-1 text-xs uppercase tracking-widest text-[var(--color-muted)]">
-              Pick a player
-            </p>
+            <div className="flex items-center justify-between pt-1">
+              <p className="text-xs uppercase tracking-widest text-[var(--color-muted)]">
+                {targetSlotObj ? `Pick a ${targetSlotObj.pos}` : 'Pick a player'}
+              </p>
+              {targetSlotObj && (
+                <button
+                  data-testid="clear-target"
+                  onClick={() => setTargetSlot(null)}
+                  className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-accent)] hover:underline"
+                >
+                  ✕ any slot
+                </button>
+              )}
+            </div>
             <div className="max-h-[44vh] overflow-y-auto rounded-[var(--radius)] border border-[var(--card-line)] bg-[var(--card)]">
               {drawnSorted.map((p) => {
-                  const ok = canPick(state, p);
+                  // When a slot is targeted, only players eligible for *that* slot are pickable.
+                  const ok = targetSlotObj
+                    ? !state.takenNames.has(p.name) && eligible(p, targetSlotObj)
+                    : canPick(state, p);
                   return (
                     <button
                       key={p.id}
@@ -182,13 +232,16 @@ export default function RollBuild({
           formation={state.formation}
           placed={state.placed}
           selectedSlotId={selected}
+          targetSlotId={targetSlotObj?.id ?? null}
           highlightSlotIds={highlight}
           onSlotClick={handleSlotClick}
         />
         {selected && state.placed[selected] ? (
           <div className="flex items-center justify-center gap-2 text-[11px]">
             <span className="font-semibold">{state.placed[selected].name}</span>
-            <span className="text-[var(--color-muted)]">— tap a glowing slot to move,</span>
+            <span className="text-[var(--color-muted)]">
+              — tap a glowing slot to move or swap,
+            </span>
             <button
               data-testid="remove"
               onClick={() => { onRemove(selected); setSelected(null); }}
@@ -197,9 +250,14 @@ export default function RollBuild({
               ✕ remove
             </button>
           </div>
+        ) : targetSlotObj ? (
+          <p className="text-center text-[11px] text-[var(--color-muted)]">
+            <span className="font-semibold text-[var(--fg)]">{targetSlotObj.pos}</span> selected —
+            pick an eligible player from the draw
+          </p>
         ) : (
           <p className="text-center text-[11px] text-[var(--color-muted)]">
-            Tap a placed player to move or remove them
+            Tap an empty slot to pick for it, or a placed player to move, swap or remove
           </p>
         )}
       </div>

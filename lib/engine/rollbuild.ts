@@ -117,6 +117,40 @@ export function pick(state: RollState, playerId: string): RollState {
   };
 }
 
+/** Place a drawn player into a SPECIFIC open slot they're eligible for; clears the draw. */
+export function pickInto(state: RollState, playerId: string, slotId: string): RollState {
+  if (!state.drawn) throw new Error('Nothing drawn');
+  const player = state.drawn.squad.find((p) => p.id === playerId);
+  if (!player) throw new Error(`Player not in drawn club: ${playerId}`);
+  const slot = state.formation.lineup.find((s) => s.id === slotId);
+  if (!slot) throw new Error(`Unknown slot: ${slotId}`);
+  if (state.placed[slotId]) throw new Error('Slot already filled');
+  if (state.takenNames.has(player.name) || !eligible(player, slot)) {
+    throw new Error('Cannot place this player here');
+  }
+  const taken = new Set(state.takenNames);
+  taken.add(player.name);
+  return {
+    ...state,
+    placed: { ...state.placed, [slotId]: player },
+    takenNames: taken,
+    drawn: null,
+  };
+}
+
+/** Slots (empty or swap-eligible) a placed player can move into. */
+export function moveTargets(state: RollState, fromSlotId: string): Slot[] {
+  const player = state.placed[fromSlotId];
+  const fromSlot = state.formation.lineup.find((s) => s.id === fromSlotId);
+  if (!player || !fromSlot) return [];
+  return state.formation.lineup.filter((s) => {
+    if (s.id === fromSlotId) return false;
+    if (!eligible(player, s)) return false;
+    const occupant = state.placed[s.id];
+    return occupant ? eligible(occupant, fromSlot) : true; // swap must be valid both ways
+  });
+}
+
 /** Move a placed player to another slot they're eligible for (swap if occupied). */
 export function moveTo(state: RollState, fromSlotId: string, toSlotId: string): RollState {
   const player = state.placed[fromSlotId];

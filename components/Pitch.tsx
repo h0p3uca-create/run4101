@@ -18,12 +18,14 @@ export default function Pitch({
   formation,
   placed,
   selectedSlotId,
+  targetSlotId,
   highlightSlotIds = [],
   onSlotClick,
 }: {
   formation: Formation;
   placed: Record<string, Player>;
   selectedSlotId?: string | null;
+  targetSlotId?: string | null;
   highlightSlotIds?: string[];
   onSlotClick?: (slotId: string) => void;
 }) {
@@ -48,6 +50,7 @@ export default function Pitch({
       {formation.lineup.map((slot) => {
         const player = placed[slot.id];
         const isSelected = selectedSlotId === slot.id;
+        const isTarget = targetSlotId === slot.id;
         const isHighlight = highlightSlotIds.includes(slot.id);
         return (
           <button
@@ -55,11 +58,11 @@ export default function Pitch({
             data-testid={`slot-${slot.id}`}
             onClick={() => onSlotClick?.(slot.id)}
             tabIndex={interactive ? undefined : -1}
-            aria-pressed={player ? isSelected : undefined}
+            aria-pressed={player ? isSelected : isTarget}
             aria-label={
               player
-                ? `${slot.pos}: ${player.name}, rating ${player.rating}${isSelected ? ', selected' : ''}`
-                : `${slot.pos} slot, empty${isHighlight ? ', valid move target' : ''}`
+                ? `${slot.pos}: ${player.name}, rating ${player.rating}${isSelected ? ', selected' : ''}${isHighlight ? ', swap target' : ''}`
+                : `${slot.pos} slot, empty${isTarget ? ', selected — choose a player' : isHighlight ? ', valid move target' : ''}`
             }
             className="absolute flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-0.5 transition-transform active:scale-95"
             style={{ left: `${slot.x}%`, top: `${slot.y}%` }}
@@ -71,6 +74,8 @@ export default function Pitch({
                   ? 'animate-pop-in bg-white text-[#0c101c] shadow-md'
                   : 'border border-dashed border-white/50 text-white/70'
               } ${isSelected ? 'ring-2 ring-[var(--color-accent)] ring-offset-2 ring-offset-transparent' : ''} ${
+                isTarget ? 'ring-2 ring-[var(--color-accent)] scale-110 bg-[color-mix(in_srgb,var(--color-accent)_25%,transparent)]' : ''
+              } ${
                 isHighlight ? 'ring-2 ring-[var(--color-accent-3)] scale-110' : ''
               }`}
               style={
