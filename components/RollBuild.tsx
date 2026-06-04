@@ -10,6 +10,7 @@ import {
 import { teamStrength } from '@/lib/engine/ratings';
 import { getFormation } from '@/lib/data/formations';
 import Pitch from './Pitch';
+import BoxScore from './BoxScore';
 import { PosBadge, RatingPill } from './PlayerChip';
 
 export default function RollBuild({
@@ -38,7 +39,7 @@ export default function RollBuild({
     .join('/');
 
   return (
-    <div className="mx-auto grid max-w-5xl gap-5 px-4 py-6 lg:grid-cols-[minmax(0,340px)_1fr]">
+    <div className="mx-auto grid max-w-6xl gap-5 px-4 py-6 lg:grid-cols-[320px_1fr_270px]">
       {/* Left: roll / draw / pick */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
@@ -130,8 +131,11 @@ export default function RollBuild({
         )}
       </div>
 
-      {/* Right: pitch */}
+      {/* Center: pitch */}
       <Pitch formation={formation} xi={xi} />
+
+      {/* Right: box score */}
+      <BoxScore formation={formation} picks={state.picks} strength={str} />
     </div>
   );
 }

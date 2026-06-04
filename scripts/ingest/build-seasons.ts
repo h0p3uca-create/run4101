@@ -185,6 +185,10 @@ function splitCsvLine(line: string): string[] {
   return out;
 }
 
+// Attacking attributes skew lower than defensive ones once averaged, which
+// suppresses scoring and caps points. A small boost rebalances att vs def so a
+// strong XI can actually run up a title-winning tally.
+const ATT_BOOST = 6;
 const ATT = ['Finishing', 'ShotPower', 'LongShots', 'Positioning', 'Volleys', 'Dribbling', 'BallControl', 'ShortPassing', 'Vision', 'Crossing', 'Acceleration', 'SprintSpeed', 'Curve', 'Penalties'];
 const DEF = ['Marking', 'StandingTackle', 'SlidingTackle', 'Interceptions', 'HeadingAccuracy', 'Strength', 'Aggression', 'Jumping'];
 const GK = ['GKReflexes', 'GKDiving', 'GKHandling', 'GKPositioning'];
@@ -228,7 +232,7 @@ async function build() {
       const overall = num(field(r, 'Overall', 'overall'));
       if (overall < 40) continue;
       const isGk = pos === 'GK';
-      const att = isGk ? 12 : avg(r, ATT);
+      const att = isGk ? 12 : Math.min(99, avg(r, ATT) + ATT_BOOST);
       const def = isGk ? Math.max(avg(r, GK), overall) : avg(r, DEF);
       const name = field(r, 'Name', 'short_name', 'long_name');
       const ps: PlayerSeason = {

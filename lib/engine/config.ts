@@ -20,7 +20,7 @@ export const ENGINE = {
   /** Home advantage in log-goals (~+25%). */
   HOME: 0.22,
   /** Strength-difference sensitivity. Smaller = selection matters more. */
-  SCALE: 19,
+  SCALE: 17,
   /** Clamp goals so freak scorelines stay believable. */
   MAX_GOALS: 9,
 };
