@@ -1,10 +1,18 @@
 'use client';
 import type { Formation, Player } from '@/lib/types';
+import { codeGroup } from '@/lib/data/formations';
 
 function lastName(name: string): string {
   const parts = name.replace(/\.$/, '').split(/\s+/);
   return parts[parts.length - 1];
 }
+
+const RING: Record<string, string> = {
+  GK: 'var(--color-accent-2)',
+  DEF: 'var(--color-accent-3)',
+  MID: '#c9b8d6',
+  FWD: 'var(--color-accent)',
+};
 
 export default function Pitch({
   formation,
@@ -48,13 +56,19 @@ export default function Pitch({
             style={{ left: `${slot.x}%`, top: `${slot.y}%` }}
           >
             <span
+              key={player?.id ?? slot.id}
               className={`flex h-11 w-11 items-center justify-center rounded-full text-[10px] font-bold transition-all ${
                 player
-                  ? 'bg-white text-[#0c101c] shadow-md'
+                  ? 'animate-pop-in bg-white text-[#0c101c] shadow-md'
                   : 'border border-dashed border-white/50 text-white/70'
               } ${isSelected ? 'ring-2 ring-[var(--color-accent)] ring-offset-2 ring-offset-transparent' : ''} ${
                 isHighlight ? 'ring-2 ring-[var(--color-accent-3)] scale-110' : ''
               }`}
+              style={
+                player && !isSelected && !isHighlight
+                  ? { boxShadow: `0 0 0 2px ${RING[codeGroup(slot.pos)]}` }
+                  : undefined
+              }
             >
               {player ? (
                 <span

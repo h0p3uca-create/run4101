@@ -101,13 +101,13 @@ export default function RollBuild({
             <button
               data-testid="roll"
               onClick={onRoll}
-              className="w-full rounded-[var(--radius)] bg-[var(--color-accent-2)] px-6 py-4 text-lg font-black text-white transition-transform hover:-translate-y-0.5"
+              className="group w-full rounded-[var(--radius)] bg-[var(--color-accent-2)] px-6 py-4 text-lg font-black text-white transition-transform hover:-translate-y-0.5"
             >
-              ROLL 🎲
+              ROLL <span className="dice">🎲</span>
             </button>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div key={state.rollCount} className="animate-slide-in space-y-3">
             <div className="rounded-2xl bg-[var(--card)] p-4 ring-1 ring-[var(--card-line)]">
               <p className="text-xs uppercase tracking-widest text-[var(--color-muted)]">Drawn</p>
               <p className="text-xl font-black leading-tight">{state.drawn.label}</p>
