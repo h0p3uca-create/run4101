@@ -3,6 +3,16 @@ import { useState } from 'react';
 import type { Player, SeasonResult } from '@/lib/types';
 import { TARGET_POINTS } from '@/lib/engine/config';
 import { teamStrength } from '@/lib/engine/ratings';
+import { topScorers } from '@/lib/engine/simulate';
+
+/** ["Salah","Salah","Aguero"] → "Salah (2), Aguero" */
+function summariseScorers(scorers: string[]): string {
+  const counts = new Map<string, number>();
+  for (const n of scorers) counts.set(n, (counts.get(n) ?? 0) + 1);
+  return [...counts.entries()]
+    .map(([name, n]) => (n > 1 ? `${name} (${n})` : name))
+    .join(', ');
+}
 
 function Stat({ label, value, accent }: { label: string; value: string; accent?: string }) {
   return (
@@ -42,6 +52,7 @@ export default function ResultView({
   const str = teamStrength(xi);
   const hit = result.reachedTarget;
   const beatChampion = result.points > winnerPts;
+  const scorers = topScorers(result, 3);
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-6 px-4 py-8">
@@ -103,6 +114,29 @@ export default function ResultView({
         Your XI strength — attack {str.attack} · defense {str.defense}
       </p>
 
+      {scorers.length > 0 && (
+        <div className="rounded-[var(--radius)] border border-[var(--card-line)] p-3">
+          <p className="mb-2 text-center text-[10px] uppercase tracking-widest text-[var(--color-muted)]">
+            ⚽ Golden Boot
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-1">
+            {scorers.map((s, i) => (
+              <span key={s.name} className="text-sm">
+                <span className={i === 0 ? 'font-bold text-[var(--color-accent)]' : 'font-medium'}>
+                  {s.name}
+                </span>{' '}
+                <span
+                  className="tabular-nums text-[var(--color-muted)]"
+                  style={{ fontFamily: 'var(--font-numeral)' }}
+                >
+                  {s.goals}
+                </span>
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
       <button
         onClick={() => setShowMatches((s) => !s)}
         className="self-center text-sm text-[var(--color-accent-3)] hover:underline"
@@ -113,24 +147,26 @@ export default function ResultView({
       {showMatches && (
         <div className="grid max-h-72 grid-cols-1 gap-1 overflow-y-auto rounded-[var(--radius)] border border-[var(--card-line)] p-2 sm:grid-cols-2">
           {result.matches.map((m, i) => (
-            <div
-              key={i}
-              className="flex items-center justify-between rounded px-2 py-1 text-sm"
-            >
-              <span className="flex items-center gap-2">
-                <span
-                  className={`pip-${m.outcome.toLowerCase()} font-bold w-3`}
-                >
-                  {m.outcome}
+            <div key={i} className="rounded px-2 py-1 text-sm">
+              <div className="flex items-center justify-between">
+                <span className="flex items-center gap-2">
+                  <span className={`pip-${m.outcome.toLowerCase()} font-bold w-3`}>
+                    {m.outcome}
+                  </span>
+                  <span className="text-[10px] text-[var(--color-muted)]">
+                    {m.home ? 'H' : 'A'}
+                  </span>
+                  <span className="truncate">{m.opponentName}</span>
                 </span>
-                <span className="text-[10px] text-[var(--color-muted)]">
-                  {m.home ? 'H' : 'A'}
+                <span className="tabular-nums font-semibold" style={{ fontFamily: 'var(--font-numeral)' }}>
+                  {m.goalsFor}-{m.goalsAgainst}
                 </span>
-                <span className="truncate">{m.opponentName}</span>
-              </span>
-              <span className="tabular-nums font-semibold" style={{ fontFamily: 'var(--font-numeral)' }}>
-                {m.goalsFor}-{m.goalsAgainst}
-              </span>
+              </div>
+              {m.scorers.length > 0 && (
+                <p className="truncate pl-7 text-[10px] text-[var(--color-muted)]">
+                  ⚽ {summariseScorers(m.scorers)}
+                </p>
+              )}
             </div>
           ))}
         </div>

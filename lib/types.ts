@@ -83,6 +83,8 @@ export interface MatchResult {
   goalsAgainst: number;
   outcome: 'W' | 'D' | 'L';
   points: number;
+  /** Names of your players who scored, in order (may repeat). */
+  scorers: string[];
 }
 
 /** Aggregate season outcome for the player's XI. */

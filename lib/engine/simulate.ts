@@ -19,7 +19,32 @@ function expectedGoals(att: number, oppDef: number, home: boolean): number {
   return lambda;
 }
 
+// Likelihood a given player scores a goal — forwards finish most, GKs ~never.
+function scorerWeight(p: Player): number {
+  const base =
+    p.pos === 'FWD' ? 1.6 : p.pos === 'MID' ? 1.0 : p.pos === 'DEF' ? 0.25 : 0.01;
+  return base * Math.max(1, p.att);
+}
+
+function pickScorers(xi: Player[], goals: number, rng: Rng): string[] {
+  if (goals <= 0) return [];
+  const weights = xi.map(scorerWeight);
+  const total = weights.reduce((a, b) => a + b, 0);
+  const out: string[] = [];
+  for (let g = 0; g < goals; g++) {
+    let r = rng() * total;
+    let idx = 0;
+    for (let i = 0; i < xi.length; i++) {
+      r -= weights[i];
+      if (r <= 0) { idx = i; break; }
+    }
+    out.push(xi[idx].name);
+  }
+  return out;
+}
+
 function playMatch(
+  xi: Player[],
   team: TeamStrength,
   opp: Opponent,
   home: boolean,
@@ -46,6 +71,7 @@ function playMatch(
     goalsAgainst,
     outcome,
     points,
+    scorers: pickScorers(xi, goalsFor, rng),
   };
 }
 
@@ -73,7 +99,7 @@ export function simulateSeason(
   for (let leg = 0; leg < SEASON.matchesPerOpponent; leg++) {
     const home = leg === 0;
     for (const opp of opponents) {
-      matches.push(playMatch(team, opp, home, rng));
+      matches.push(playMatch(xi, team, opp, home, rng));
     }
   }
 
@@ -102,4 +128,19 @@ export function simulateSeason(
     matches,
     reachedTarget: agg.points >= TARGET_POINTS,
   };
+}
+
+/** Aggregate goalscorers across the season, highest first (your Golden Boot). */
+export function topScorers(
+  result: SeasonResult,
+  limit = 3,
+): { name: string; goals: number }[] {
+  const tally = new Map<string, number>();
+  for (const m of result.matches) {
+    for (const name of m.scorers) tally.set(name, (tally.get(name) ?? 0) + 1);
+  }
+  return [...tally.entries()]
+    .map(([name, goals]) => ({ name, goals }))
+    .sort((a, b) => b.goals - a.goals)
+    .slice(0, limit);
 }

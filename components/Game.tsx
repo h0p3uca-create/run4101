@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { Opponent, Player, SeasonResult } from '@/lib/types';
 import {
   createRoll,
@@ -17,10 +17,12 @@ import {
   seasonOpponents,
   DEFAULT_SEASON_ID,
 } from '@/lib/data/seasons';
+import { SEASONS_INDEX } from '@/lib/data/seasons';
 import SetupScreen, { type StartMode } from './SetupScreen';
 import RollBuild from './RollBuild';
 import ResultView from './ResultView';
 import ThemeToggle from './ThemeToggle';
+import Footer from './Footer';
 
 type Phase = 'setup' | 'build' | 'result';
 
@@ -42,19 +44,38 @@ export default function Game() {
   const [finalXi, setFinalXi] = useState<Player[]>([]);
   const [shared, setShared] = useState(false);
 
-  function start(sId: string, fId: string, m: StartMode) {
+  function begin(sId: string, fId: string, seedStr: string, m: StartMode) {
     const season = getSeason(sId);
-    const s = `${sId}|${m === 'daily' ? dailySeed() : randomSeed()}`;
     setSeasonId(sId);
     setFormationId(fId);
     setMode(m);
-    setSeed(s);
+    setSeed(seedStr);
     setOpponents(seasonOpponents(season));
-    setBuild(rollDraw(createRoll({ seed: s, season, formationId: fId })));
+    setBuild(rollDraw(createRoll({ seed: seedStr, season, formationId: fId })));
     setResult(null);
     setShared(false);
     setPhase('build');
   }
+
+  function start(sId: string, fId: string, m: StartMode) {
+    begin(sId, fId, `${sId}|${m === 'daily' ? dailySeed() : randomSeed()}`, m);
+  }
+
+  // Deep-link: ?s=<seed>&f=<formation> reproduces a shared build (same draws).
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const s = params.get('s');
+    if (!s) return;
+    const sId = s.split('|')[0];
+    if (!SEASONS_INDEX.some((m) => m.id === sId)) return;
+    const fId = params.get('f') || '4-3-3';
+    try {
+      begin(sId, fId, s, s.includes('daily') ? 'daily' : 'random');
+    } catch {
+      /* ignore malformed links */
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const onRoll = () => build && setBuild(rollDraw(build));
   const onReroll = () => build && setBuild(rerollDraw(build));
@@ -71,10 +92,13 @@ export default function Game() {
   function onShare() {
     if (!result) return;
     const tag = `${seasonId}${mode === 'daily' ? ' · daily' : ''}`;
+    const origin =
+      typeof window !== 'undefined' ? window.location.origin : 'https://gofor101.com';
+    const url = `${origin}/?s=${encodeURIComponent(seed)}&f=${formationId}`;
     const text =
       `Gofor101 ${tag} — ${result.points}/${TARGET_POINTS} pts ${result.reachedTarget ? '🏆' : ''}\n` +
       `W${result.won} D${result.drawn} L${result.lost} · GD ${result.goalDifference >= 0 ? '+' : ''}${result.goalDifference}\n` +
-      `gofor101.com`;
+      `Same draft: ${url}`;
     navigator.clipboard?.writeText(text).then(
       () => {
         setShared(true);
@@ -119,6 +143,8 @@ export default function Game() {
           shared={shared}
         />
       )}
+
+      <Footer />
     </main>
   );
 }
