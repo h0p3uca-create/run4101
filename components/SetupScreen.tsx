@@ -27,7 +27,7 @@ export default function SetupScreen({
           Gofor<span className="text-[var(--color-accent)]">101</span>
         </h1>
         <p className="text-[var(--color-muted)]">
-          Draft from a real season&apos;s squads. Simulate 38 games. Reach{' '}
+          Roll a club, pick a player, build an XI. Simulate 38 games. Reach{' '}
           <span className="font-bold text-[var(--fg)]">{TARGET_POINTS} points</span>.
         </p>
       </div>

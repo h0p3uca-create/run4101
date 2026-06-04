@@ -1,53 +1,33 @@
 'use client';
 import { useState } from 'react';
-import type { Player, SeasonResult } from '@/lib/types';
+import type { Opponent, Player, SeasonResult } from '@/lib/types';
 import {
-  createDraft,
-  pick,
-  aiPick,
-  isComplete,
-  isUserTurn,
-  currentManagerIndex,
-  getUserXi,
-  type DraftState,
-} from '@/lib/engine/draft';
+  createRoll,
+  roll as rollDraw,
+  reroll as rerollDraw,
+  pick as pickPlayer,
+  lineup,
+  type RollState,
+} from '@/lib/engine/rollbuild';
 import { simulateSeason } from '@/lib/engine/simulate';
 import { dailySeed } from '@/lib/engine/rng';
 import { TARGET_POINTS } from '@/lib/engine/config';
 import {
   getSeason,
-  seasonPool,
   seasonOpponents,
   DEFAULT_SEASON_ID,
 } from '@/lib/data/seasons';
-import type { Opponent } from '@/lib/types';
 import SetupScreen, { type StartMode } from './SetupScreen';
-import DraftBoard, { type RivalPick } from './DraftBoard';
+import RollBuild from './RollBuild';
 import ResultView from './ResultView';
 import ThemeToggle from './ThemeToggle';
 
-type Phase = 'setup' | 'draft' | 'result';
+type Phase = 'setup' | 'build' | 'result';
 
 function randomSeed(): string {
   const c = globalThis.crypto;
   if (c && 'randomUUID' in c) return `r-${c.randomUUID().slice(0, 8)}`;
   return `r-${Math.floor(Math.random() * 1e9).toString(36)}`;
-}
-
-/** Advance AI managers until it's the user's turn; collect what rivals signed. */
-function advanceAi(state: DraftState): { state: DraftState; picks: RivalPick[] } {
-  let s = state;
-  const picks: RivalPick[] = [];
-  while (!isComplete(s) && !isUserTurn(s)) {
-    const mgrIdx = currentManagerIndex(s);
-    const beforeIds = new Set(s.pool.map((p) => p.id));
-    const name = s.managers[mgrIdx].name;
-    s = aiPick(s);
-    const taken = [...beforeIds].find((id) => !s.pool.some((p) => p.id === id));
-    const player = state.pool.find((p) => p.id === taken);
-    if (player) picks.push({ manager: name, player });
-  }
-  return { state: s, picks };
 }
 
 export default function Game() {
@@ -57,44 +37,32 @@ export default function Game() {
   const [seed, setSeed] = useState('');
   const [mode, setMode] = useState<StartMode>('random');
   const [opponents, setOpponents] = useState<Opponent[]>([]);
-  const [draft, setDraft] = useState<DraftState | null>(null);
-  const [rivalPicks, setRivalPicks] = useState<RivalPick[]>([]);
+  const [build, setBuild] = useState<RollState | null>(null);
   const [result, setResult] = useState<SeasonResult | null>(null);
   const [finalXi, setFinalXi] = useState<Player[]>([]);
   const [shared, setShared] = useState(false);
 
   function start(sId: string, fId: string, m: StartMode) {
     const season = getSeason(sId);
-    const s = m === 'daily' ? `${sId}|${dailySeed()}` : `${sId}|${randomSeed()}`;
+    const s = `${sId}|${m === 'daily' ? dailySeed() : randomSeed()}`;
     setSeasonId(sId);
     setFormationId(fId);
     setMode(m);
     setSeed(s);
     setOpponents(seasonOpponents(season));
-    const initial = createDraft({
-      seed: s,
-      userFormationId: fId,
-      pool: seasonPool(season),
-    });
-    const { state, picks } = advanceAi(initial);
-    setDraft(state);
-    setRivalPicks(picks);
+    setBuild(rollDraw(createRoll({ seed: s, season, formationId: fId })));
     setResult(null);
     setShared(false);
-    setPhase('draft');
+    setPhase('build');
   }
 
-  function onPick(id: string) {
-    if (!draft) return;
-    const afterUser = pick(draft, id);
-    const { state, picks } = advanceAi(afterUser);
-    setDraft(state);
-    setRivalPicks(picks);
-  }
+  const onRoll = () => build && setBuild(rollDraw(build));
+  const onReroll = () => build && setBuild(rerollDraw(build));
+  const onPick = (id: string) => build && setBuild(pickPlayer(build, id));
 
   function onSimulate() {
-    if (!draft) return;
-    const xi = getUserXi(draft);
+    if (!build) return;
+    const xi = lineup(build);
     setFinalXi(xi);
     setResult(simulateSeason(xi, { seed, opponents }));
     setPhase('result');
@@ -106,7 +74,7 @@ export default function Game() {
     const text =
       `Gofor101 ${tag} — ${result.points}/${TARGET_POINTS} pts ${result.reachedTarget ? '🏆' : ''}\n` +
       `W${result.won} D${result.drawn} L${result.lost} · GD ${result.goalDifference >= 0 ? '+' : ''}${result.goalDifference}\n` +
-      `${tag}\ngofor101.com`;
+      `gofor101.com`;
     navigator.clipboard?.writeText(text).then(
       () => {
         setShared(true);
@@ -130,11 +98,12 @@ export default function Game() {
       </header>
 
       {phase === 'setup' && <SetupScreen onStart={start} />}
-      {phase === 'draft' && draft && (
-        <DraftBoard
-          state={draft}
+      {phase === 'build' && build && (
+        <RollBuild
+          state={build}
           formationId={formationId}
-          rivalPicks={rivalPicks}
+          onRoll={onRoll}
+          onReroll={onReroll}
           onPick={onPick}
           onSimulate={onSimulate}
         />
