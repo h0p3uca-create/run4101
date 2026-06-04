@@ -18,6 +18,8 @@ export interface Player {
   era?: string;
   /** Real club for this season (season pool only). */
   club?: string;
+  /** Specific positions the player can play, FIFA codes e.g. ['LB','LWB']. */
+  positions?: string[];
 }
 
 // ── Season-based mode (real PL squads + results) ──────────────
