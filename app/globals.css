@@ -17,9 +17,10 @@
   --color-muted: #8b8294;
   --color-line: #2a1430;
 
-  --font-display: "Archivo", ui-sans-serif, system-ui, sans-serif;
-  --font-body: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-numeral: "Archivo", ui-monospace, monospace;
+  --font-display: var(--font-anton), "Archivo", ui-sans-serif, system-ui, sans-serif;
+  --font-head: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  --font-body: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-numeral: var(--font-archivo), ui-monospace, monospace;
 
   --radius: 0.5rem;
 }

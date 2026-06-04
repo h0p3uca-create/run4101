@@ -1,5 +1,11 @@
 import type { Metadata } from 'next';
+import { Anton, Archivo, Inter } from 'next/font/google';
 import './globals.css';
+
+// Self-hosted at build time (works with output: export).
+const anton = Anton({ subsets: ['latin'], weight: '400', variable: '--font-anton', display: 'swap' });
+const archivo = Archivo({ subsets: ['latin'], weight: ['600', '700', '800', '900'], variable: '--font-archivo', display: 'swap' });
+const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' });
 
 const TITLE = 'Gofor101 — Can you reach 101 points?';
 const DESC =
@@ -29,7 +35,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${anton.variable} ${archivo.variable} ${inter.variable}`}>
       <body>{children}</body>
     </html>
   );
