@@ -75,7 +75,12 @@ export function canPick(state: RollState, player: Player): boolean {
 }
 
 function drawSource(state: RollState): DrawSource {
-  return state.sources[Math.floor(state.rng() * state.sources.length)];
+  // Prefer clubs that actually have a player you can place into an open slot, so
+  // every roll is useful (no "drew a club, can't pick anyone" dead ends — matters
+  // most for the final scarce position). Falls back to all sources if complete.
+  const useful = state.sources.filter((s) => s.squad.some((p) => canPick(state, p)));
+  const pool = useful.length ? useful : state.sources;
+  return pool[Math.floor(state.rng() * pool.length)];
 }
 
 export function roll(state: RollState): RollState {
