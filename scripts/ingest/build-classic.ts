@@ -15,7 +15,8 @@ import { createReadStream, existsSync, readFileSync, writeFileSync } from 'node:
 import { createInterface } from 'node:readline';
 import { join } from 'node:path';
 import { codeGroup } from '../../lib/data/formations';
-import type { Position } from '../../lib/types';
+import { simulateSeason } from '../../lib/engine/simulate';
+import type { Opponent, Player, Position } from '../../lib/types';
 
 const CACHE = join('scripts', 'ingest', '.cache');
 const OUT = join('lib', 'data', 'seasons');
@@ -132,6 +133,40 @@ function squadStrength(squad: PlayerSeason[], nudge: number) {
 
 interface Stat { teamName: string; apps: number; goals: number; assists: number; minutes: number; cs: number; }
 
+// ── per-season balance: auto-tune opponent boost so an optimal XI reaches 101
+// at roughly the same rate as the FIFA-era seasons (~3%). Player ratings stay
+// fixed; only the opponents' strength scale moves. ──────────────────────────
+interface ClubBase { name: string; pos: number; pts: number; gf: number; ga: number; tier: Tier; nudge: number; squad: PlayerSeason[]; }
+
+// Mirror the calibration's "best possible XI" selection so the tuned boost
+// actually targets the strongest achievable team.
+function optimalXi(players: PlayerSeason[]): PlayerSeason[] {
+  const key = (p: PlayerSeason) =>
+    p.pos === 'GK' || p.pos === 'DEF' ? p.def * 0.6 + p.att * 0.4 : p.att * 0.7 + p.def * 0.3;
+  const by = (g: Position, n: number) =>
+    players.filter((p) => p.pos === g).sort((a, b) => key(b) - key(a)).slice(0, n);
+  return [...by('GK', 1), ...by('DEF', 4), ...by('MID', 3), ...by('FWD', 3)];
+}
+function opponentsAt(bases: ClubBase[], boost: number): Opponent[] {
+  return bases.slice(0, 19).map((c) => {
+    const s = squadStrength(c.squad, c.nudge + boost);
+    return { id: normClub(c.name), name: c.name, attack: s.attack, defense: s.defense, tier: c.tier };
+  });
+}
+function tuneBoost(bases: ClubBase[], xi: Player[]): number {
+  if (xi.length < 11) return 3;
+  const TARGET = 0.03, N = 300;
+  let best = 3, bestDiff = Infinity;
+  for (let b = 0; b <= 14; b++) {
+    const opp = opponentsAt(bases, b);
+    let hit = 0;
+    for (let i = 0; i < N; i++) if (simulateSeason(xi, { seed: `tune-${b}-${i}`, opponents: opp }).points >= 101) hit++;
+    const diff = Math.abs(hit / N - TARGET);
+    if (diff < bestDiff) { bestDiff = diff; best = b; }
+  }
+  return best;
+}
+
 async function main() {
   if (!existsSync(PERF) || !existsSync(PROFILES)) throw new Error('Run the download step first (tm_perf.csv / tm_profiles.csv missing)');
 
@@ -203,7 +238,8 @@ async function main() {
       }
     }
 
-    const clubs = table.map((c, i) => {
+    // 1) build each club's squad with synthesised ratings (player ratings final)
+    const bases: ClubBase[] = table.map((c, i) => {
       const pos = i + 1;
       const finishBonus = 15 - (pos - 1) * 1.0; // +15 .. -4
       const raw = (teamSquads.get(normClub(c.club)) ?? []) as (PlayerSeason & { _st: Stat })[];
@@ -219,9 +255,16 @@ async function main() {
         const { att, def } = attDef(p.positions[0], rating);
         return { id: p.id, name: p.name, pos: p.pos, positions: p.positions, att, def, rating };
       }).sort((a, b) => b.rating - a.rating).slice(0, 24);
+      return { name: c.club, pos, pts: c.pts, gf: c.gf, ga: c.ga, tier: tier(i), nudge: (10.5 - pos) * 0.3, squad };
+    });
 
-      const str = squadStrength(squad, (10.5 - pos) * 0.3);
-      return { id: normClub(c.club), name: c.club, pos, pts: c.pts, gf: c.gf, ga: c.ga, tier: tier(i), attack: str.attack, defense: str.defense, squad };
+    // 2) auto-tune the opponent-strength boost so 101 stays ~3% for an optimal XI
+    const boost = tuneBoost(bases, optimalXi(bases.flatMap((b) => b.squad)));
+
+    // 3) finalise club attack/defense at the tuned boost
+    const clubs = bases.map((c) => {
+      const str = squadStrength(c.squad, c.nudge + boost);
+      return { id: normClub(c.name), name: c.name, pos: c.pos, pts: c.pts, gf: c.gf, ga: c.ga, tier: c.tier, attack: str.attack, defense: str.defense, squad: c.squad };
     });
 
     const players = clubs.reduce((n, c) => n + c.squad.length, 0);
