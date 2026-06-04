@@ -1,21 +1,25 @@
 'use client';
 import { useState } from 'react';
 import { FORMATIONS } from '@/lib/data/formations';
-import { SEASONS_INDEX, DEFAULT_SEASON_ID } from '@/lib/data/seasons';
+import { SEASONS_INDEX } from '@/lib/data/seasons';
 import { TARGET_POINTS } from '@/lib/engine/config';
 
-export type StartMode = 'daily' | 'random';
+export type StartMode = 'main' | 'challenge';
+export interface StartOptions {
+  mode: StartMode;
+  seasonId: string | null;
+  formationId: string;
+  daily: boolean;
+}
 
-export default function SetupScreen({
-  onStart,
-}: {
-  onStart: (seasonId: string, formationId: string, mode: StartMode) => void;
-}) {
-  const [seasonId, setSeasonId] = useState(DEFAULT_SEASON_ID);
+const FEATURED = '2017-18'; // Today's Challenge
+
+export default function SetupScreen({ onStart }: { onStart: (o: StartOptions) => void }) {
   const [formationId, setFormationId] = useState(FORMATIONS[0].id);
+  const featured = SEASONS_INDEX.find((s) => s.id === FEATURED);
 
   return (
-    <div className="mx-auto flex max-w-xl flex-col items-center gap-8 px-6 py-12 text-center">
+    <div className="mx-auto flex max-w-xl flex-col items-center gap-8 px-6 py-10 text-center">
       <div className="space-y-2">
         <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-muted)]">
           Premier League — inspired
@@ -27,36 +31,12 @@ export default function SetupScreen({
           Gofor<span className="text-[var(--color-accent)]">101</span>
         </h1>
         <p className="text-[var(--color-muted)]">
-          Roll a club, pick a player, build an XI. Simulate 38 games. Reach{' '}
+          Roll a club, pick players onto the pitch, reach{' '}
           <span className="font-bold text-[var(--fg)]">{TARGET_POINTS} points</span>.
         </p>
       </div>
 
-      <div className="w-full space-y-3">
-        <p className="text-left text-xs uppercase tracking-widest text-[var(--color-muted)]">
-          Season
-        </p>
-        <div className="grid grid-cols-1 gap-2">
-          {SEASONS_INDEX.map((s) => (
-            <button
-              key={s.id}
-              data-testid={`season-${s.id}`}
-              onClick={() => setSeasonId(s.id)}
-              className={`flex items-center justify-between rounded-[var(--radius)] border px-4 py-3 text-left transition-colors ${
-                seasonId === s.id
-                  ? 'border-[var(--color-accent)] bg-[color-mix(in_srgb,var(--color-accent)_12%,transparent)]'
-                  : 'border-[var(--card-line)] text-[var(--color-muted)] hover:text-[var(--fg)]'
-              }`}
-            >
-              <span className="font-bold">{s.label}</span>
-              <span className="text-xs text-[var(--color-muted)]">
-                champion {s.winnerPts} pts
-              </span>
-            </button>
-          ))}
-        </div>
-      </div>
-
+      {/* Formation */}
       <div className="w-full space-y-3">
         <p className="text-left text-xs uppercase tracking-widest text-[var(--color-muted)]">
           Formation
@@ -79,25 +59,52 @@ export default function SetupScreen({
         </div>
       </div>
 
-      <div className="flex w-full flex-col gap-3 sm:flex-row">
-        <button
-          data-testid="mode-daily"
-          onClick={() => onStart(seasonId, formationId, 'daily')}
-          className="flex-1 rounded-[var(--radius)] bg-[var(--color-accent)] px-6 py-3 font-bold text-[#1a0a1c] transition-transform hover:-translate-y-0.5"
-        >
-          Today&apos;s Challenge
-        </button>
-        <button
-          data-testid="mode-random"
-          onClick={() => onStart(seasonId, formationId, 'random')}
-          className="flex-1 rounded-[var(--radius)] border border-[var(--card-line)] px-6 py-3 font-bold transition-colors hover:border-[var(--color-accent)]"
-        >
-          Random Draft
-        </button>
-      </div>
-      <p className="text-xs text-[var(--color-muted)]">
-        Today&apos;s Challenge gives everyone the same draft. Share your score.
+      {/* Main mode */}
+      <button
+        data-testid="mode-main"
+        onClick={() => onStart({ mode: 'main', seasonId: null, formationId, daily: false })}
+        className="w-full rounded-[var(--radius)] bg-[var(--color-accent)] px-6 py-4 text-lg font-black text-[#1a0a1c] transition-transform hover:-translate-y-0.5"
+      >
+        Play · All-time XI
+      </button>
+      <p className="-mt-5 text-xs text-[var(--color-muted)]">
+        Draw any club from any season (2014/15–2022/23) and build a dream XI.
       </p>
+
+      {/* Challenges */}
+      <div className="w-full space-y-3">
+        <p className="text-left text-xs uppercase tracking-widest text-[var(--color-muted)]">
+          Challenges · beat a real season
+        </p>
+        {featured && (
+          <button
+            data-testid="today-challenge"
+            onClick={() => onStart({ mode: 'challenge', seasonId: FEATURED, formationId, daily: true })}
+            className="flex w-full items-center justify-between rounded-[var(--radius)] border border-[var(--color-accent-2)] bg-[color-mix(in_srgb,var(--color-accent-2)_10%,transparent)] px-4 py-3 text-left"
+          >
+            <span>
+              <span className="block text-[10px] uppercase tracking-widest text-[var(--color-accent-2)]">
+                Today&apos;s Challenge
+              </span>
+              <span className="font-bold">{featured.label}</span>
+            </span>
+            <span className="text-xs text-[var(--color-muted)]">champ {featured.winnerPts}</span>
+          </button>
+        )}
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          {SEASONS_INDEX.map((s) => (
+            <button
+              key={s.id}
+              data-testid={`season-${s.id}`}
+              onClick={() => onStart({ mode: 'challenge', seasonId: s.id, formationId, daily: false })}
+              className="flex items-center justify-between rounded-[var(--radius)] border border-[var(--card-line)] px-3 py-2 text-left text-sm transition-colors hover:border-[var(--color-accent)]"
+            >
+              <span className="font-semibold">{s.label}</span>
+              <span className="text-[10px] text-[var(--color-muted)]">{s.winnerPts}</span>
+            </button>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

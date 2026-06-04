@@ -5,19 +5,9 @@ import {
   samplePoisson,
   teamStrength,
   simulateSeason,
-  createDraft,
-  runUntilUser,
-  legalPicksForCurrent,
-  pick,
-  autoDraft,
-  getUserManager,
-  getUserXi,
-  isComplete,
-  AI_QUOTA,
 } from '../lib/engine';
 import { PLAYERS, PLAYERS_BY_ID } from '../lib/data/players';
 import { OPPONENTS } from '../lib/data/opponents';
-import { getFormation } from '../lib/data/formations';
 
 describe('rng', () => {
   it('is deterministic for a given seed', () => {
@@ -99,50 +89,5 @@ describe('simulateSeason', () => {
 
   it('throws on an incomplete XI', () => {
     expect(() => simulateSeason(xi.slice(0, 10), { seed: 's' })).toThrow();
-  });
-});
-
-describe('snake draft', () => {
-  it('lets the user complete a legal XI for their formation', () => {
-    const formationId = '4-3-3';
-    let state = createDraft({ seed: 'draft-test', userFormationId: formationId });
-    state = runUntilUser(state);
-    while (!isComplete(state)) {
-      if (state.managers[state.order[state.turn]].isUser) {
-        const legal = legalPicksForCurrent(state);
-        expect(legal.length).toBeGreaterThan(0);
-        state = pick(state, legal[0].id); // greedy human stand-in
-      }
-      state = runUntilUser(state);
-    }
-    const xi = getUserXi(state);
-    expect(xi).toHaveLength(11);
-    const slots = getFormation(formationId).slots;
-    for (const pos of ['GK', 'DEF', 'MID', 'FWD'] as const) {
-      expect(xi.filter((p) => p.pos === pos).length).toBe(slots[pos]);
-    }
-    // no duplicate players across the whole draft
-    const all = state.managers.flatMap((m) => m.picks.map((p) => p.id));
-    expect(new Set(all).size).toBe(all.length);
-  });
-
-  it('auto-draft fills every manager to 11 and respects quotas', () => {
-    const final = autoDraft(createDraft({ seed: 'auto', userFormationId: '4-4-2' }));
-    expect(isComplete(final)).toBe(true);
-    for (const m of final.managers) {
-      expect(m.picks).toHaveLength(11);
-      const counts = m.picks.reduce<Record<string, number>>((c, p) => {
-        c[p.pos] = (c[p.pos] ?? 0) + 1;
-        return c;
-      }, {});
-      for (const pos of Object.keys(m.quota) as (keyof typeof m.quota)[]) {
-        expect(counts[pos] ?? 0).toBe(m.quota[pos]);
-      }
-    }
-  });
-
-  it('is feasible for the midfield-heavy 4-2-3-1', () => {
-    const final = autoDraft(createDraft({ seed: 'feasible', userFormationId: '4-2-3-1' }));
-    expect(getUserManager(final).picks).toHaveLength(11);
   });
 });

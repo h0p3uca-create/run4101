@@ -6,19 +6,19 @@ import {
   roll as rollDraw,
   reroll as rerollDraw,
   pick as pickPlayer,
+  moveTo,
   lineup,
   type RollState,
+  type BuildMode,
 } from '@/lib/engine/rollbuild';
 import { simulateSeason } from '@/lib/engine/simulate';
 import { dailySeed } from '@/lib/engine/rng';
 import { TARGET_POINTS } from '@/lib/engine/config';
-import {
-  getSeason,
-  seasonOpponents,
-  DEFAULT_SEASON_ID,
-} from '@/lib/data/seasons';
-import { SEASONS_INDEX } from '@/lib/data/seasons';
-import SetupScreen, { type StartMode } from './SetupScreen';
+import { getSeason, seasonOpponents, SEASONS_INDEX } from '@/lib/data/seasons';
+import { seasonSources, allTimeSources } from '@/lib/data/pool';
+import { OPPONENTS } from '@/lib/data/opponents';
+import { getFormation } from '@/lib/data/formations';
+import SetupScreen, { type StartOptions } from './SetupScreen';
 import RollBuild from './RollBuild';
 import ResultView from './ResultView';
 import ThemeToggle from './ThemeToggle';
@@ -28,49 +28,52 @@ type Phase = 'setup' | 'build' | 'result';
 
 function randomSeed(): string {
   const c = globalThis.crypto;
-  if (c && 'randomUUID' in c) return `r-${c.randomUUID().slice(0, 8)}`;
-  return `r-${Math.floor(Math.random() * 1e9).toString(36)}`;
+  if (c && 'randomUUID' in c) return c.randomUUID().slice(0, 8);
+  return Math.floor(Math.random() * 1e9).toString(36);
 }
 
 export default function Game() {
   const [phase, setPhase] = useState<Phase>('setup');
-  const [seasonId, setSeasonId] = useState(DEFAULT_SEASON_ID);
+  const [mode, setMode] = useState<BuildMode>('main');
+  const [seasonId, setSeasonId] = useState<string | null>(null);
   const [formationId, setFormationId] = useState('4-3-3');
   const [seed, setSeed] = useState('');
-  const [mode, setMode] = useState<StartMode>('random');
   const [opponents, setOpponents] = useState<Opponent[]>([]);
   const [build, setBuild] = useState<RollState | null>(null);
   const [result, setResult] = useState<SeasonResult | null>(null);
   const [finalXi, setFinalXi] = useState<Player[]>([]);
   const [shared, setShared] = useState(false);
 
-  function begin(sId: string, fId: string, seedStr: string, m: StartMode) {
-    const season = getSeason(sId);
+  function begin(m: BuildMode, sId: string | null, fId: string, seedStr: string) {
+    const formation = getFormation(fId);
+    const sources = m === 'challenge' && sId ? seasonSources(getSeason(sId)) : allTimeSources();
+    const opp = m === 'challenge' && sId ? seasonOpponents(getSeason(sId)) : OPPONENTS;
+    setMode(m);
     setSeasonId(sId);
     setFormationId(fId);
-    setMode(m);
     setSeed(seedStr);
-    setOpponents(seasonOpponents(season));
-    setBuild(rollDraw(createRoll({ seed: seedStr, season, formationId: fId })));
+    setOpponents(opp);
+    setBuild(rollDraw(createRoll({ seed: seedStr, mode: m, formation, sources })));
     setResult(null);
     setShared(false);
     setPhase('build');
   }
 
-  function start(sId: string, fId: string, m: StartMode) {
-    begin(sId, fId, `${sId}|${m === 'daily' ? dailySeed() : randomSeed()}`, m);
+  function start(o: StartOptions) {
+    const rand = o.daily ? dailySeed() : randomSeed();
+    begin(o.mode, o.seasonId, o.formationId, `${o.mode}:${o.seasonId ?? 'all'}:${rand}`);
   }
 
-  // Deep-link: ?s=<seed>&f=<formation> reproduces a shared build (same draws).
+  // Deep-link: ?s=<mode:season:rand>&f=<formation> reproduces the draw sequence.
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const s = params.get('s');
     if (!s) return;
-    const sId = s.split('|')[0];
-    if (!SEASONS_INDEX.some((m) => m.id === sId)) return;
-    const fId = params.get('f') || '4-3-3';
+    const [m, sId] = s.split(':');
+    if (m !== 'main' && m !== 'challenge') return;
+    if (m === 'challenge' && !SEASONS_INDEX.some((x) => x.id === sId)) return;
     try {
-      begin(sId, fId, s, s.includes('daily') ? 'daily' : 'random');
+      begin(m, m === 'challenge' ? sId : null, params.get('f') || '4-3-3', s);
     } catch {
       /* ignore malformed links */
     }
@@ -80,6 +83,7 @@ export default function Game() {
   const onRoll = () => build && setBuild(rollDraw(build));
   const onReroll = () => build && setBuild(rerollDraw(build));
   const onPick = (id: string) => build && setBuild(pickPlayer(build, id));
+  const onMove = (from: string, to: string) => build && setBuild(moveTo(build, from, to));
 
   function onSimulate() {
     if (!build) return;
@@ -91,14 +95,14 @@ export default function Game() {
 
   function onShare() {
     if (!result) return;
-    const tag = `${seasonId}${mode === 'daily' ? ' · daily' : ''}`;
     const origin =
       typeof window !== 'undefined' ? window.location.origin : 'https://gofor101.com';
     const url = `${origin}/?s=${encodeURIComponent(seed)}&f=${formationId}`;
+    const tag = mode === 'challenge' && seasonId ? seasonId : 'all-time';
     const text =
       `Gofor101 ${tag} — ${result.points}/${TARGET_POINTS} pts ${result.reachedTarget ? '🏆' : ''}\n` +
       `W${result.won} D${result.drawn} L${result.lost} · GD ${result.goalDifference >= 0 ? '+' : ''}${result.goalDifference}\n` +
-      `Same draft: ${url}`;
+      `Same draws: ${url}`;
     navigator.clipboard?.writeText(text).then(
       () => {
         setShared(true);
@@ -107,6 +111,8 @@ export default function Game() {
       () => {},
     );
   }
+
+  const season = mode === 'challenge' && seasonId ? getSeason(seasonId) : null;
 
   return (
     <main className="min-h-screen">
@@ -125,10 +131,10 @@ export default function Game() {
       {phase === 'build' && build && (
         <RollBuild
           state={build}
-          formationId={formationId}
           onRoll={onRoll}
           onReroll={onReroll}
           onPick={onPick}
+          onMove={onMove}
           onSimulate={onSimulate}
         />
       )}
@@ -136,8 +142,9 @@ export default function Game() {
         <ResultView
           result={result}
           xi={finalXi}
-          seasonLabel={getSeason(seasonId).label}
-          winnerPts={getSeason(seasonId).winnerPts}
+          anonymous={mode === 'main'}
+          seasonLabel={season?.label ?? 'All-time'}
+          winnerPts={season?.winnerPts ?? 0}
           onReplay={() => setPhase('setup')}
           onShare={onShare}
           shared={shared}

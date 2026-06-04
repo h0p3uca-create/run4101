@@ -35,6 +35,7 @@ export default function ResultView({
   xi,
   seasonLabel,
   winnerPts,
+  anonymous = false,
   onReplay,
   onShare,
   shared,
@@ -43,6 +44,7 @@ export default function ResultView({
   xi: Player[];
   seasonLabel: string;
   winnerPts: number;
+  anonymous?: boolean;
   onReplay: () => void;
   onShare: () => void;
   shared: boolean;
@@ -77,6 +79,7 @@ export default function ResultView({
         </p>
 
         {/* Per-season badge: did you beat that season's real champion? */}
+        {!anonymous && (
         <div
           className={`mt-3 inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-sm font-semibold ${
             beatChampion
@@ -89,6 +92,7 @@ export default function ResultView({
             {beatChampion ? `— beaten by ${result.points - winnerPts}!` : `— need ${winnerPts + 1 - result.points} more`}
           </span>
         </div>
+        )}
       </div>
 
       <div className="h-3 w-full overflow-hidden rounded-full bg-[color-mix(in_srgb,var(--fg)_12%,transparent)]">
@@ -137,14 +141,16 @@ export default function ResultView({
         </div>
       )}
 
+      {!anonymous && (
       <button
         onClick={() => setShowMatches((s) => !s)}
         className="self-center text-sm text-[var(--color-accent-3)] hover:underline"
       >
         {showMatches ? 'Hide' : 'Show'} all 38 results
       </button>
+      )}
 
-      {showMatches && (
+      {!anonymous && showMatches && (
         <div className="grid max-h-72 grid-cols-1 gap-1 overflow-y-auto rounded-[var(--radius)] border border-[var(--card-line)] p-2 sm:grid-cols-2">
           {result.matches.map((m, i) => (
             <div key={i} className="rounded px-2 py-1 text-sm">

@@ -1,124 +1,156 @@
-import type { Player, Position, Season } from '../types';
-import { getFormation } from '../data/formations';
+import type { Formation, Player, Slot, TeamStrength } from '../types';
+import type { DrawSource } from '../data/pool';
+import { teamStrength } from './ratings';
+import { eligible, fitRank } from './positions';
 import { rngFromSeed, type Rng } from './rng';
 
 // ─────────────────────────────────────────────────────────────
-// 7a0-style "roll & pick" build (replaces the snake draft).
-// ROLL draws a real club from the chosen season; you pick one player from its
-// real squad to fill an open position. A small re-roll budget lets you reject a
-// draw. No AI rivals — scarcity comes from the random draws + the limited rerolls.
+// Roll & pick onto SPECIFIC position slots.
+// ROLL draws a club (challenge: from the season; main: from all PL history).
+// Pick a player → auto-placed into the best-fit open slot they're eligible for.
+// Placed players can be moved to any other eligible slot. A small reroll budget
+// lets you reject a draw. The same person can't appear twice (taken by name).
 // ─────────────────────────────────────────────────────────────
 
 export const REROLLS = 3;
-
-export interface DrawnClub {
-  name: string;
-  squad: Player[];
-}
+export type BuildMode = 'challenge' | 'main';
 
 export interface RollState {
   seed: string;
   rng: Rng;
-  clubs: DrawnClub[];
-  slots: Record<Position, number>;
-  picks: Player[];
-  taken: Set<string>;
-  drawn: DrawnClub | null;
+  mode: BuildMode;
+  formation: Formation;
+  sources: DrawSource[];
+  /** slotId → placed player */
+  placed: Record<string, Player>;
+  takenNames: Set<string>;
+  drawn: DrawSource | null;
   rerollsLeft: number;
   rollCount: number;
 }
 
 export function createRoll({
   seed,
-  season,
-  formationId,
+  mode,
+  formation,
+  sources,
 }: {
   seed: string;
-  season: Season;
-  formationId: string;
+  mode: BuildMode;
+  formation: Formation;
+  sources: DrawSource[];
 }): RollState {
-  const clubs: DrawnClub[] = season.clubs.map((c) => ({
-    name: c.name,
-    squad: c.squad.map((p) => ({ ...p, club: c.name })),
-  }));
   return {
     seed,
     rng: rngFromSeed(`roll|${seed}`),
-    clubs,
-    slots: getFormation(formationId).slots,
-    picks: [],
-    taken: new Set(),
+    mode,
+    formation,
+    sources,
+    placed: {},
+    takenNames: new Set(),
     drawn: null,
     rerollsLeft: REROLLS,
     rollCount: 0,
   };
 }
 
-function counts(picks: Player[]): Record<Position, number> {
-  const c: Record<Position, number> = { GK: 0, DEF: 0, MID: 0, FWD: 0 };
-  for (const p of picks) c[p.pos]++;
-  return c;
-}
-
-/** Position groups that still need at least one player. */
-export function openPositions(state: RollState): Record<Position, number> {
-  const have = counts(state.picks);
-  return {
-    GK: state.slots.GK - have.GK,
-    DEF: state.slots.DEF - have.DEF,
-    MID: state.slots.MID - have.MID,
-    FWD: state.slots.FWD - have.FWD,
-  };
-}
-
 export function isComplete(state: RollState): boolean {
-  return state.picks.length === 11;
+  return state.formation.lineup.every((s) => state.placed[s.id]);
 }
 
-/** Can this player be picked right now? (position still open, not already taken) */
+export function openSlots(state: RollState): Slot[] {
+  return state.formation.lineup.filter((s) => !state.placed[s.id]);
+}
+
+/** Open slots a player is eligible to fill, best fit first. */
+export function eligibleOpenSlots(state: RollState, player: Player): Slot[] {
+  return openSlots(state)
+    .filter((s) => eligible(player, s))
+    .sort((a, b) => fitRank(player, a) - fitRank(player, b));
+}
+
 export function canPick(state: RollState, player: Player): boolean {
-  if (state.taken.has(player.id)) return false;
-  return openPositions(state)[player.pos] > 0;
+  if (state.takenNames.has(player.name)) return false;
+  return eligibleOpenSlots(state, player).length > 0;
 }
 
-function drawClub(state: RollState): DrawnClub {
-  const idx = Math.floor(state.rng() * state.clubs.length);
-  return state.clubs[idx];
+function drawSource(state: RollState): DrawSource {
+  return state.sources[Math.floor(state.rng() * state.sources.length)];
 }
 
-/** Advance to a fresh draw (used for the next pick). */
 export function roll(state: RollState): RollState {
   if (isComplete(state)) return state;
-  return { ...state, drawn: drawClub(state), rollCount: state.rollCount + 1 };
+  return { ...state, drawn: drawSource(state), rollCount: state.rollCount + 1 };
 }
 
-/** Reject the current draw for a different club (costs one of the budget). */
 export function reroll(state: RollState): RollState {
   if (state.rerollsLeft <= 0 || !state.drawn) return state;
   return {
     ...state,
-    drawn: drawClub(state),
+    drawn: drawSource(state),
     rollCount: state.rollCount + 1,
     rerollsLeft: state.rerollsLeft - 1,
   };
 }
 
-/** Commit a pick from the current draw; clears the draw so the user rolls next. */
+/** Place a drawn player into their best-fit open slot; clears the draw. */
 export function pick(state: RollState, playerId: string): RollState {
   if (!state.drawn) throw new Error('Nothing drawn');
   const player = state.drawn.squad.find((p) => p.id === playerId);
   if (!player) throw new Error(`Player not in drawn club: ${playerId}`);
-  if (!canPick(state, player)) throw new Error('Cannot pick this player now');
-  const taken = new Set(state.taken);
-  taken.add(player.id);
-  return { ...state, picks: [...state.picks, player], taken, drawn: null };
+  const slots = eligibleOpenSlots(state, player);
+  if (state.takenNames.has(player.name) || slots.length === 0) {
+    throw new Error('Cannot place this player');
+  }
+  const taken = new Set(state.takenNames);
+  taken.add(player.name);
+  return {
+    ...state,
+    placed: { ...state.placed, [slots[0].id]: player },
+    takenNames: taken,
+    drawn: null,
+  };
 }
 
-const POS_ORDER: Position[] = ['GK', 'DEF', 'MID', 'FWD'];
+/** Move a placed player to another slot they're eligible for (swap if occupied). */
+export function moveTo(state: RollState, fromSlotId: string, toSlotId: string): RollState {
+  const player = state.placed[fromSlotId];
+  const toSlot = state.formation.lineup.find((s) => s.id === toSlotId);
+  const fromSlot = state.formation.lineup.find((s) => s.id === fromSlotId);
+  if (!player || !toSlot || !fromSlot || fromSlotId === toSlotId) return state;
+  if (!eligible(player, toSlot)) return state;
 
-/** The selected XI, sorted GK→FWD. */
+  const occupant = state.placed[toSlotId];
+  if (occupant && !eligible(occupant, fromSlot)) return state; // can't swap
+
+  const placed = { ...state.placed };
+  placed[toSlotId] = player;
+  if (occupant) placed[fromSlotId] = occupant;
+  else delete placed[fromSlotId];
+  return { ...state, placed };
+}
+
+export function removeFrom(state: RollState, slotId: string): RollState {
+  const player = state.placed[slotId];
+  if (!player) return state;
+  const placed = { ...state.placed };
+  delete placed[slotId];
+  const taken = new Set(state.takenNames);
+  taken.delete(player.name);
+  return { ...state, placed, takenNames: taken };
+}
+
+/** Placed XI in slot (lineup) order. */
 export function lineup(state: RollState): Player[] {
-  return [...state.picks].sort(
-    (a, b) => POS_ORDER.indexOf(a.pos) - POS_ORDER.indexOf(b.pos),
-  );
+  return state.formation.lineup
+    .map((s) => state.placed[s.id])
+    .filter((p): p is Player => !!p);
+}
+
+export function strengthOf(state: RollState): TeamStrength {
+  return teamStrength(lineup(state));
+}
+
+export function placedCount(state: RollState): number {
+  return Object.keys(state.placed).length;
 }

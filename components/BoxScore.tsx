@@ -1,30 +1,22 @@
-import type { Formation, Player, Position, TeamStrength } from '@/lib/types';
-
-const ORDER: Position[] = ['GK', 'DEF', 'MID', 'FWD'];
+import type { Formation, Player, TeamStrength } from '@/lib/types';
 
 /** Per-slot lineup card with running attack/defense — the right-hand "box score". */
 export default function BoxScore({
   formation,
-  picks,
+  placed,
   strength,
 }: {
   formation: Formation;
-  picks: Player[];
+  placed: Record<string, Player>;
   strength: TeamStrength;
 }) {
-  const rows: { pos: Position; player?: Player }[] = [];
-  for (const pos of ORDER) {
-    const filled = picks.filter((p) => p.pos === pos);
-    for (let i = 0; i < formation.slots[pos]; i++) {
-      rows.push({ pos, player: filled[i] });
-    }
-  }
+  const filled = Object.keys(placed).length;
 
   return (
     <aside className="rounded-2xl border border-[var(--card-line)] bg-[var(--card)] p-4">
       <div className="mb-3 flex items-baseline justify-between">
         <span className="text-xs uppercase tracking-widest text-[var(--color-muted)]">
-          Box score · {picks.length}/11
+          Box score · {filled}/11
         </span>
       </div>
 
@@ -54,27 +46,30 @@ export default function BoxScore({
       </div>
 
       <ul className="space-y-1">
-        {rows.map((r, i) => (
-          <li
-            key={i}
-            className="flex items-center gap-2 border-b border-[var(--card-line)]/40 py-1 text-sm last:border-0"
-          >
-            <span className="w-8 text-[10px] font-bold uppercase text-[var(--color-muted)]">
-              {r.pos}
-            </span>
-            <span className={`flex-1 truncate ${r.player ? 'font-medium' : 'text-[var(--color-muted)]'}`}>
-              {r.player?.name ?? '—'}
-            </span>
-            {r.player && (
-              <span
-                className="tabular-nums font-bold text-[var(--color-accent)]"
-                style={{ fontFamily: 'var(--font-numeral)' }}
-              >
-                {r.player.rating}
+        {formation.lineup.map((slot) => {
+          const p = placed[slot.id];
+          return (
+            <li
+              key={slot.id}
+              className="flex items-center gap-2 border-b border-[var(--card-line)]/40 py-1 text-sm last:border-0"
+            >
+              <span className="w-9 text-[10px] font-bold uppercase text-[var(--color-muted)]">
+                {slot.pos}
               </span>
-            )}
-          </li>
-        ))}
+              <span className={`flex-1 truncate ${p ? 'font-medium' : 'text-[var(--color-muted)]'}`}>
+                {p?.name ?? '—'}
+              </span>
+              {p && (
+                <span
+                  className="tabular-nums font-bold text-[var(--color-accent)]"
+                  style={{ fontFamily: 'var(--font-numeral)' }}
+                >
+                  {p.rating}
+                </span>
+              )}
+            </li>
+          );
+        })}
       </ul>
     </aside>
   );

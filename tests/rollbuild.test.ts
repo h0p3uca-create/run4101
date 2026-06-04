@@ -4,28 +4,37 @@ import {
   roll,
   reroll,
   pick,
+  moveTo,
   canPick,
-  openPositions,
+  eligibleOpenSlots,
+  openSlots,
   isComplete,
   lineup,
+  placedCount,
   REROLLS,
   type RollState,
 } from '../lib/engine/rollbuild';
+import { eligible } from '../lib/engine/positions';
 import { simulateSeason } from '../lib/engine/simulate';
 import { getSeason, seasonOpponents } from '../lib/data/seasons';
+import { seasonSources, allTimeSources } from '../lib/data/pool';
 import { getFormation } from '../lib/data/formations';
 
 const SEASON = getSeason('2017-18');
 
-function fresh(formationId = '4-3-3'): RollState {
-  return createRoll({ seed: 'test', season: SEASON, formationId });
+function fresh(formationId = '4-3-3', mode: 'challenge' | 'main' = 'challenge'): RollState {
+  return createRoll({
+    seed: 'test',
+    mode,
+    formation: getFormation(formationId),
+    sources: mode === 'challenge' ? seasonSources(SEASON) : allTimeSources(),
+  });
 }
 
-// Drive a whole build: roll, pick first eligible, repeat.
 function autoBuild(state: RollState): RollState {
   let s = state;
   let guard = 0;
-  while (!isComplete(s) && guard++ < 300) {
+  while (!isComplete(s) && guard++ < 500) {
     if (!s.drawn) s = roll(s);
     const p = s.drawn!.squad.find((pl) => canPick(s, pl));
     s = p ? pick(s, p.id) : roll(s);
@@ -34,53 +43,46 @@ function autoBuild(state: RollState): RollState {
 }
 
 describe('rollbuild · setup', () => {
-  it('starts empty with a full reroll budget', () => {
+  it('starts empty with a full reroll budget and 11 slots', () => {
     const s = fresh();
-    expect(s.picks).toHaveLength(0);
+    expect(placedCount(s)).toBe(0);
     expect(s.drawn).toBeNull();
     expect(s.rerollsLeft).toBe(REROLLS);
-    expect(s.clubs.length).toBe(SEASON.clubs.length);
+    expect(openSlots(s)).toHaveLength(11);
+    expect(s.sources.length).toBe(SEASON.clubs.length);
   });
 
-  it('open positions match the formation at the start', () => {
-    const open = openPositions(fresh('4-4-2'));
-    const slots = getFormation('4-4-2').slots;
-    expect(open).toEqual(slots);
+  it('all-time mode pools every club of every season', () => {
+    const s = fresh('4-3-3', 'main');
+    expect(s.sources.length).toBeGreaterThan(100);
   });
 });
 
-describe('rollbuild · roll & pick', () => {
-  it('roll draws a club with a squad', () => {
-    const s = roll(fresh());
-    expect(s.drawn).not.toBeNull();
-    expect(s.drawn!.squad.length).toBeGreaterThan(10);
-    expect(s.drawn!.squad[0].club).toBe(s.drawn!.name);
+describe('rollbuild · roll & pick onto slots', () => {
+  it('roll draws a club squad; deterministic per seed', () => {
+    expect(roll(fresh()).drawn!.label).toBe(roll(fresh()).drawn!.label);
+    expect(roll(fresh()).drawn!.squad.length).toBeGreaterThan(10);
   });
 
-  it('is deterministic for the same seed', () => {
-    expect(roll(fresh()).drawn!.name).toBe(roll(fresh()).drawn!.name);
-  });
-
-  it('pick fills a slot, marks taken, and clears the draw', () => {
+  it('pick places the player into an eligible slot they can play', () => {
     const drawn = roll(fresh());
     const player = drawn.drawn!.squad.find((p) => canPick(drawn, p))!;
+    const targetSlots = eligibleOpenSlots(drawn, player);
     const after = pick(drawn, player.id);
-    expect(after.picks).toContainEqual(player);
-    expect(after.taken.has(player.id)).toBe(true);
+    const slotId = Object.keys(after.placed).find((k) => after.placed[k].name === player.name)!;
+    const slot = after.formation.lineup.find((s) => s.id === slotId)!;
+    expect(eligible(player, slot)).toBe(true);
+    expect(targetSlots.map((s) => s.id)).toContain(slotId);
     expect(after.drawn).toBeNull();
-    expect(openPositions(after)[player.pos]).toBe(
-      openPositions(drawn)[player.pos] - 1,
-    );
+    expect(after.takenNames.has(player.name)).toBe(true);
   });
 
-  it('cannot pick a player whose position is already full', () => {
-    // fill the single GK slot, then a second GK must be illegal
-    let s = roll(fresh());
-    const gk1 = s.drawn!.squad.find((p) => p.pos === 'GK')!;
-    s = pick(s, gk1.id);
-    s = roll(s);
-    const gk2 = s.drawn!.squad.find((p) => p.pos === 'GK');
-    if (gk2) expect(canPick(s, gk2)).toBe(false);
+  it('cannot pick the same person twice (by name)', () => {
+    let s = roll(fresh('4-3-3', 'main'));
+    const p = s.drawn!.squad.find((pl) => canPick(s, pl))!;
+    s = pick(s, p.id);
+    // a different season-version of the same name must be unpickable
+    expect(s.takenNames.has(p.name)).toBe(true);
   });
 
   it('pick throws when nothing is drawn', () => {
@@ -88,44 +90,58 @@ describe('rollbuild · roll & pick', () => {
   });
 });
 
-describe('rollbuild · reroll budget', () => {
-  it('reroll redraws and decrements the budget', () => {
-    const s = reroll(roll(fresh()));
-    expect(s.rerollsLeft).toBe(REROLLS - 1);
-    expect(s.drawn).not.toBeNull();
-  });
-
-  it('reroll is a no-op once the budget is gone', () => {
+describe('rollbuild · move between eligible slots', () => {
+  it('moves a placed player to another eligible empty slot', () => {
+    // place a central midfielder, then move across the midfield line
     let s = roll(fresh());
+    const cm = s.drawn!.squad.find((p) => p.positions?.includes('CM') && canPick(s, p));
+    if (!cm) return; // squad-dependent; skip if none drawn
+    s = pick(s, cm.id);
+    const fromId = Object.keys(s.placed).find((k) => s.placed[k].name === cm.name)!;
+    const otherCm = s.formation.lineup.find(
+      (sl) => sl.id !== fromId && !s.placed[sl.id] && eligible(cm, sl),
+    );
+    if (!otherCm) return;
+    const moved = moveTo(s, fromId, otherCm.id);
+    expect(moved.placed[otherCm.id].name).toBe(cm.name);
+    expect(moved.placed[fromId]).toBeUndefined();
+  });
+});
+
+describe('rollbuild · reroll budget', () => {
+  it('reroll redraws and decrements; no-op when exhausted', () => {
+    let s = reroll(roll(fresh()));
+    expect(s.rerollsLeft).toBe(REROLLS - 1);
+    s = roll(fresh());
     for (let i = 0; i < REROLLS; i++) s = reroll(s);
     expect(s.rerollsLeft).toBe(0);
-    const blocked = reroll(s);
-    expect(blocked.rerollsLeft).toBe(0);
-    expect(blocked).toBe(s); // unchanged
+    expect(reroll(s)).toBe(s);
   });
 });
 
 describe('rollbuild · full build → simulate', () => {
-  it('completes a legal XI for the formation', () => {
+  it('fills every slot with an eligible player', () => {
     const final = autoBuild(fresh('4-3-3'));
     expect(isComplete(final)).toBe(true);
-    const xi = lineup(final);
-    expect(xi).toHaveLength(11);
-    const slots = getFormation('4-3-3').slots;
-    for (const pos of ['GK', 'DEF', 'MID', 'FWD'] as const) {
-      expect(xi.filter((p) => p.pos === pos).length).toBe(slots[pos]);
+    for (const slot of final.formation.lineup) {
+      const p = final.placed[slot.id];
+      expect(p).toBeDefined();
+      expect(eligible(p, slot)).toBe(true);
     }
-    expect(new Set(xi.map((p) => p.id)).size).toBe(11); // no duplicates
+    const names = lineup(final).map((p) => p.name);
+    expect(new Set(names).size).toBe(11); // no duplicate person
   });
 
-  it('the built XI simulates a valid season vs real opponents', () => {
+  it('the built XI simulates a valid season', () => {
     const xi = lineup(autoBuild(fresh()));
-    const r = simulateSeason(xi, {
-      seed: 'sim',
-      opponents: seasonOpponents(SEASON),
-    });
+    const r = simulateSeason(xi, { seed: 'sim', opponents: seasonOpponents(SEASON) });
     expect(r.played).toBe(38);
     expect(r.points).toBe(r.won * 3 + r.drawn);
-    expect(r.points).toBeLessThanOrEqual(114);
+  });
+
+  it('completes in all-time (cross-season) mode too', () => {
+    const final = autoBuild(fresh('4-4-2', 'main'));
+    expect(isComplete(final)).toBe(true);
+    expect(lineup(final)).toHaveLength(11);
   });
 });

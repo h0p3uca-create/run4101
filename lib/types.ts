@@ -60,9 +60,20 @@ export interface FormationSlots {
   FWD: number;
 }
 
+/** A specific position on the pitch (FIFA code) with layout coordinates. */
+export interface Slot {
+  id: string; // unique within a formation, e.g. "lb"
+  pos: string; // FIFA code: GK, LB, CB, RB, CM, CDM, CAM, LM, RM, LW, RW, ST
+  x: number; // 0 (left) – 100 (right)
+  y: number; // 0 (attack/top) – 100 (own goal/bottom)
+}
+
 export interface Formation {
   id: string; // "4-3-3"
   label: string;
+  /** Specific position lineup (drives the pitch + eligibility). */
+  lineup: Slot[];
+  /** Group counts derived from lineup (back-compat for strength/sim helpers). */
   slots: FormationSlots;
 }
 
