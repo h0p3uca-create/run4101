@@ -215,8 +215,17 @@ function nameKey(name: string): string {
   return `${initial}|${last}`.replace(/[^a-z|]/g, '');
 }
 
-interface PerfStat { apps: number; goals: number; assists: number; }
+interface PerfStat { apps: number; goals: number; assists: number; cs: number; }
 type PerfMap = Map<string, PerfStat>;
+
+// Position-aware "form" contribution: attackers from goals/assists, keepers &
+// defenders also rewarded for clean sheets.
+function formContribution(pos: Position, st: PerfStat): number {
+  if (pos === 'FWD') return Math.min(14, (st.goals + 0.5 * st.assists) * 1.1);
+  if (pos === 'MID') return Math.min(11, (st.goals + 0.6 * st.assists) * 1.1);
+  if (pos === 'DEF') return Math.min(6, (st.goals + st.assists) * 0.8) + Math.min(7, st.cs * 0.4);
+  return Math.min(13, st.cs * 0.85); // GK
+}
 
 async function loadPerf(): Promise<PerfMap> {
   const map: PerfMap = new Map();
@@ -241,7 +250,7 @@ async function loadPerf(): Promise<PerfMap> {
         id: `${2000 + Number(sn.split('/')[0])}-${sn.split('/')[1]}`,
         pid: c[idx['player_id']],
         club: normClub(c[idx['team_name']]),
-        st: { apps, goals: num(c[idx['goals']]), assists: num(c[idx['assists']]) },
+        st: { apps, goals: num(c[idx['goals']]), assists: num(c[idx['assists']]), cs: num(c[idx['clean_sheets']]) },
       });
       ids.add(c[idx['player_id']]);
     }
@@ -268,10 +277,7 @@ function applyPerfBonus(p: PlayerSeason, perf: PerfMap, seasonId: string, ck: st
   const st = perf.get(`${seasonId}|${ck}|${nameKey(p.name)}`);
   if (!st) return p;
   const starter = 15 * Math.min(1, st.apps / 38);
-  const gc = p.pos === 'FWD' ? Math.min(14, (st.goals + 0.5 * st.assists) * 1.1)
-    : p.pos === 'MID' ? Math.min(11, (st.goals + 0.6 * st.assists) * 1.1)
-    : p.pos === 'DEF' ? Math.min(6, (st.goals + st.assists) * 0.8) : 0;
-  const form = 50 + finishBonus + starter + gc;
+  const form = 50 + finishBonus + starter + formContribution(p.pos, st);
   const bonus = Math.max(0, Math.min(9, Math.round((form - p.rating) * 0.6)));
   if (bonus === 0) return p;
   const att = p.pos === 'FWD' ? Math.min(99, p.att + bonus) : p.pos === 'MID' ? Math.min(99, p.att + Math.round(bonus * 0.5)) : p.att;

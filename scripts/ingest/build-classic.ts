@@ -124,7 +124,7 @@ function squadStrength(squad: PlayerSeason[], nudge: number) {
   return { attack: clamp(attack), defense: clamp(defense) };
 }
 
-interface Stat { teamName: string; apps: number; goals: number; assists: number; minutes: number; }
+interface Stat { teamName: string; apps: number; goals: number; assists: number; minutes: number; cs: number; }
 
 async function main() {
   if (!existsSync(PERF) || !existsSync(PROFILES)) throw new Error('Run the download step first (tm_perf.csv / tm_profiles.csv missing)');
@@ -153,6 +153,7 @@ async function main() {
       teams.get(teamId)!.set(pid, {
         teamName: c[idx['team_name']],
         apps, goals: numOf(c[idx['goals']]), assists: numOf(c[idx['assists']]), minutes: numOf(c[idx['minutes_played']]),
+        cs: numOf(c[idx['clean_sheets']]),
       });
     }
   }
@@ -206,7 +207,8 @@ async function main() {
         const g = p.pos;
         const gc = g === 'FWD' ? Math.min(14, (st.goals + 0.5 * st.assists) * 1.1)
           : g === 'MID' ? Math.min(11, (st.goals + 0.6 * st.assists) * 1.1)
-          : g === 'DEF' ? Math.min(6, (st.goals + st.assists) * 0.8) : 0;
+          : g === 'DEF' ? Math.min(6, (st.goals + st.assists) * 0.8) + Math.min(7, st.cs * 0.4)
+          : Math.min(13, st.cs * 0.85); // GK rewarded for clean sheets
         const rating = Math.max(46, Math.min(91, Math.round(50 + finishBonus + starter + gc)));
         const { att, def } = attDef(p.positions[0], rating);
         return { id: p.id, name: p.name, pos: p.pos, positions: p.positions, att, def, rating };
