@@ -1,0 +1,23 @@
+[
+  {
+    "id": "2017-18",
+    "label": "2017/18 · The Centurions",
+    "clubs": 20,
+    "players": 480,
+    "winnerPts": 100
+  },
+  {
+    "id": "2018-19",
+    "label": "2018/19 · 98 vs 97",
+    "clubs": 20,
+    "players": 480,
+    "winnerPts": 98
+  },
+  {
+    "id": "2020-21",
+    "label": "2020/21 · City reclaim it",
+    "clubs": 20,
+    "players": 480,
+    "winnerPts": 86
+  }
+]

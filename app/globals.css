@@ -1,0 +1,53 @@
+@import "tailwindcss";
+
+/*
+  Gofor101 design tokens — Premier League *inspired* (no official marks).
+  Signature PL purple #37003c, pitch-to-paper neutrals, electric accents.
+*/
+@theme {
+  --color-pl-purple: #37003c;
+  --color-pl-purple-2: #4b0a52;
+  --color-pl-ink: #1a0a1c;
+
+  --color-accent: #00ff85;   /* electric green — "win" */
+  --color-accent-2: #e90052; /* magenta — "goal/alert" */
+  --color-accent-3: #04f5ff; /* cyan — "info" */
+
+  --color-paper: #f6f4f8;
+  --color-muted: #8b8294;
+  --color-line: #2a1430;
+
+  --font-display: "Archivo", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-numeral: "Archivo", ui-monospace, monospace;
+
+  --radius: 0.5rem;
+}
+
+:root {
+  --bg: var(--color-paper);
+  --fg: var(--color-pl-ink);
+  --card: #ffffff;
+  --card-line: #e7e1ec;
+}
+
+.dark {
+  --bg: var(--color-pl-purple);
+  --fg: var(--color-paper);
+  --card: #2a0530;
+  --card-line: var(--color-line);
+}
+
+html { color-scheme: light dark; }
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Win/draw/loss pills used across the table + match list */
+.pip-w { color: var(--color-accent); }
+.pip-d { color: var(--color-muted); }
+.pip-l { color: var(--color-accent-2); }
