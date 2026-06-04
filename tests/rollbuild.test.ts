@@ -16,18 +16,19 @@ import {
 } from '../lib/engine/rollbuild';
 import { eligible } from '../lib/engine/positions';
 import { simulateSeason } from '../lib/engine/simulate';
-import { getSeason, seasonOpponents } from '../lib/data/seasons';
+import { loadSeason, seasonOpponents } from '../lib/data/seasons';
 import { seasonSources, allTimeSources } from '../lib/data/pool';
 import { getFormation } from '../lib/data/formations';
 
-const SEASON = getSeason('2017-18');
+const SEASON = await loadSeason('2017-18');
+const ALL_SOURCES = await allTimeSources();
 
 function fresh(formationId = '4-3-3', mode: 'challenge' | 'main' = 'challenge'): RollState {
   return createRoll({
     seed: 'test',
     mode,
     formation: getFormation(formationId),
-    sources: mode === 'challenge' ? seasonSources(SEASON) : allTimeSources(),
+    sources: mode === 'challenge' ? seasonSources(SEASON) : ALL_SOURCES,
   });
 }
 

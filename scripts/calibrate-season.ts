@@ -3,13 +3,20 @@
 // reports the points distribution vs that season's real clubs.
 //
 // Run: npx tsx scripts/calibrate-season.ts
-import { getSeason, seasonPool, seasonOpponents, SEASONS_INDEX } from '../lib/data/seasons';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { seasonPool, seasonOpponents, SEASONS_INDEX } from '../lib/data/seasons';
 import { simulateSeason } from '../lib/engine/simulate';
 import { teamStrength } from '../lib/engine/ratings';
 import { getFormation } from '../lib/data/formations';
 import { rngFromSeed } from '../lib/engine/rng';
 import { TARGET_POINTS } from '../lib/engine/config';
-import type { Player, Position } from '../lib/types';
+import type { Player, Position, Season } from '../lib/types';
+
+// Read season JSON directly (the app loader is async/dynamic; scripts read sync).
+function getSeason(id: string): Season {
+  return JSON.parse(readFileSync(join('lib', 'data', 'seasons', `${id}.json`), 'utf-8')) as Season;
+}
 
 const SLOTS = getFormation('4-3-3').slots;
 

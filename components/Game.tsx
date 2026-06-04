@@ -14,7 +14,7 @@ import {
 import { simulateSeason } from '@/lib/engine/simulate';
 import { dailySeed } from '@/lib/engine/rng';
 import { TARGET_POINTS } from '@/lib/engine/config';
-import { getSeason, seasonOpponents, SEASONS_INDEX } from '@/lib/data/seasons';
+import { loadSeason, seasonOpponents, SEASONS_INDEX } from '@/lib/data/seasons';
 import { seasonSources, allTimeSources } from '@/lib/data/pool';
 import { OPPONENTS } from '@/lib/data/opponents';
 import { getFormation } from '@/lib/data/formations';
@@ -34,8 +34,11 @@ function randomSeed(): string {
 
 export default function Game() {
   const [phase, setPhase] = useState<Phase>('setup');
+  const [loading, setLoading] = useState(false);
   const [mode, setMode] = useState<BuildMode>('main');
   const [seasonId, setSeasonId] = useState<string | null>(null);
+  const [seasonLabel, setSeasonLabel] = useState('All-time');
+  const [winnerPts, setWinnerPts] = useState(0);
   const [formationId, setFormationId] = useState('4-3-3');
   const [seed, setSeed] = useState('');
   const [opponents, setOpponents] = useState<Opponent[]>([]);
@@ -44,24 +47,42 @@ export default function Game() {
   const [finalXi, setFinalXi] = useState<Player[]>([]);
   const [shared, setShared] = useState(false);
 
-  function begin(m: BuildMode, sId: string | null, fId: string, seedStr: string) {
-    const formation = getFormation(fId);
-    const sources = m === 'challenge' && sId ? seasonSources(getSeason(sId)) : allTimeSources();
-    const opp = m === 'challenge' && sId ? seasonOpponents(getSeason(sId)) : OPPONENTS;
-    setMode(m);
-    setSeasonId(sId);
-    setFormationId(fId);
-    setSeed(seedStr);
-    setOpponents(opp);
-    setBuild(rollDraw(createRoll({ seed: seedStr, mode: m, formation, sources })));
-    setResult(null);
-    setShared(false);
-    setPhase('build');
+  async function startSeed(m: BuildMode, sId: string | null, fId: string, seedStr: string) {
+    setLoading(true);
+    try {
+      let label = 'All-time';
+      let pts = 0;
+      let sources;
+      let opp: Opponent[];
+      if (m === 'challenge' && sId) {
+        const season = await loadSeason(sId);
+        sources = seasonSources(season);
+        opp = seasonOpponents(season);
+        label = season.label;
+        pts = season.winnerPts;
+      } else {
+        sources = await allTimeSources();
+        opp = OPPONENTS;
+      }
+      setMode(m);
+      setSeasonId(sId);
+      setSeasonLabel(label);
+      setWinnerPts(pts);
+      setFormationId(fId);
+      setSeed(seedStr);
+      setOpponents(opp);
+      setBuild(rollDraw(createRoll({ seed: seedStr, mode: m, formation: getFormation(fId), sources })));
+      setResult(null);
+      setShared(false);
+      setPhase('build');
+    } finally {
+      setLoading(false);
+    }
   }
 
   function start(o: StartOptions) {
     const rand = o.daily ? dailySeed() : randomSeed();
-    begin(o.mode, o.seasonId, o.formationId, `${o.mode}:${o.seasonId ?? 'all'}:${rand}`);
+    void startSeed(o.mode, o.seasonId, o.formationId, `${o.mode}:${o.seasonId ?? 'all'}:${rand}`);
   }
 
   // Deep-link: ?s=<mode:season:rand>&f=<formation> reproduces the draw sequence.
@@ -72,11 +93,7 @@ export default function Game() {
     const [m, sId] = s.split(':');
     if (m !== 'main' && m !== 'challenge') return;
     if (m === 'challenge' && !SEASONS_INDEX.some((x) => x.id === sId)) return;
-    try {
-      begin(m, m === 'challenge' ? sId : null, params.get('f') || '4-3-3', s);
-    } catch {
-      /* ignore malformed links */
-    }
+    void startSeed(m, m === 'challenge' ? sId : null, params.get('f') || '4-3-3', s);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -112,8 +129,6 @@ export default function Game() {
     );
   }
 
-  const season = mode === 'challenge' && seasonId ? getSeason(seasonId) : null;
-
   return (
     <main className="min-h-screen">
       <header className="flex items-center justify-between px-4 py-3">
@@ -126,6 +141,14 @@ export default function Game() {
         </button>
         <ThemeToggle />
       </header>
+
+      {loading && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--bg)]/80 backdrop-blur-sm">
+          <p className="animate-pulse text-sm uppercase tracking-widest text-[var(--color-muted)]">
+            Drawing squads…
+          </p>
+        </div>
+      )}
 
       {phase === 'setup' && <SetupScreen onStart={start} />}
       {phase === 'build' && build && (
@@ -143,8 +166,8 @@ export default function Game() {
           result={result}
           xi={finalXi}
           anonymous={mode === 'main'}
-          seasonLabel={season?.label ?? 'All-time'}
-          winnerPts={season?.winnerPts ?? 0}
+          seasonLabel={seasonLabel}
+          winnerPts={winnerPts}
           onReplay={() => setPhase('setup')}
           onShare={onShare}
           shared={shared}
