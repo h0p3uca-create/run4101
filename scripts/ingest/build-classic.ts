@@ -112,10 +112,33 @@ function standings(text: string): ClubRow[] {
   return [...t.values()].sort((x, y) => y.pts - x.pts || (y.gf - y.ga) - (x.gf - x.ga) || y.gf - x.gf);
 }
 const normClub = (s: string) => s.toLowerCase().replace(/&/g, 'and').replace(/\b(fc|afc|cf)\b/g, '').replace(/[^a-z]/g, '').trim();
+// Canonical display name: strip a trailing " FC" so a club is named the same way
+// across seasons (openfootball added " FC" suffixes from ~2020). Keeps "AFC …".
+const displayName = (s: string) => s.replace(/\s+FC$/, '').trim();
 type Tier = 'title' | 'europe' | 'mid' | 'relegation';
 const tier = (p: number): Tier => (p < 4 ? 'title' : p < 7 ? 'europe' : p < 17 ? 'mid' : 'relegation');
 
 interface PlayerSeason { id: string; name: string; pos: Position; positions: string[]; att: number; def: number; rating: number; }
+
+// Guarantee a fieldable squad (≥1 GK, 4 DEF, 3 MID, 3 FWD) by padding sparse
+// early-season squads with generic low-rated bodies so every club can be
+// fielded as an opponent and contributes to the draft pool.
+const MIN: Record<Position, number> = { GK: 1, DEF: 4, MID: 3, FWD: 3 };
+const PAD_CODE: Record<Position, string> = { GK: 'GK', DEF: 'CB', MID: 'CM', FWD: 'ST' };
+function ensureViable(squad: PlayerSeason[], clubId: string): PlayerSeason[] {
+  const out = [...squad];
+  for (const g of ['GK', 'DEF', 'MID', 'FWD'] as Position[]) {
+    let have = out.filter((p) => p.pos === g).length;
+    let n = 1;
+    while (have < MIN[g]) {
+      const code = PAD_CODE[g];
+      const { att, def } = attDef(code, 52);
+      out.push({ id: `${clubId}-pad-${g}-${n}`, name: 'Squad Player', pos: g, positions: [code], att, def, rating: 52 });
+      have++; n++;
+    }
+  }
+  return out;
+}
 
 const W_ATT = { FWD: 0.5, MID: 0.35, DEF: 0.15 };
 const W_DEF = { GK: 0.3, DEF: 0.45, MID: 0.25 };
@@ -183,7 +206,7 @@ async function main() {
       const sn = c[idx['season_name']];
       if (!TARGET.includes(sn)) continue;
       const apps = numOf(c[idx['nb_on_pitch']]);
-      if (apps < 3) continue;
+      if (apps < 1) continue; // early-2000s data is sparse; keep anyone who played
       const id = seasonId(sn);
       const teamId = c[idx['team_id']];
       const pid = c[idx['player_id']];
@@ -209,9 +232,10 @@ async function main() {
       if (!header) { c.forEach((h, i) => (idx[h] = i)); header = true; continue; }
       const pid = c[idx['player_id']];
       if (!neededIds.has(pid)) continue;
-      const rawName = c[idx['player_name']] || c[idx['name_in_home_country']] || 'Unknown';
+      const rawName = c[idx['player_name']] || c[idx['name_in_home_country']] || '';
+      const cleanName = rawName.replace(/\s*\(\d+\)\s*$/, '').trim();
       profile.set(pid, {
-        name: rawName.replace(/\s*\(\d+\)\s*$/, '').trim() || 'Unknown',
+        name: cleanName && cleanName.toLowerCase() !== 'unknown' ? cleanName : 'Squad Player',
         pos: mapPos(c[idx['position']] ?? '', c[idx['main_position']] ?? ''),
       });
     }
@@ -255,7 +279,8 @@ async function main() {
         const { att, def } = attDef(p.positions[0], rating);
         return { id: p.id, name: p.name, pos: p.pos, positions: p.positions, att, def, rating };
       }).sort((a, b) => b.rating - a.rating).slice(0, 24);
-      return { name: c.club, pos, pts: c.pts, gf: c.gf, ga: c.ga, tier: tier(i), nudge: (10.5 - pos) * 0.3, squad };
+      const viable = ensureViable(squad, normClub(c.club));
+      return { name: displayName(c.club), pos, pts: c.pts, gf: c.gf, ga: c.ga, tier: tier(i), nudge: (10.5 - pos) * 0.3, squad: viable };
     });
 
     // 2) auto-tune the opponent-strength boost so 101 stays ~3% for an optimal XI

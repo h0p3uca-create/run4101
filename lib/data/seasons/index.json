@@ -3,7 +3,7 @@
     "id": "2000-01",
     "label": "2000/01 · estimated",
     "clubs": 20,
-    "players": 302,
+    "players": 348,
     "winnerPts": 80,
     "estimated": true
   },
@@ -11,7 +11,7 @@
     "id": "2001-02",
     "label": "2001/02 · Arsenal double · est.",
     "clubs": 20,
-    "players": 317,
+    "players": 355,
     "winnerPts": 87,
     "estimated": true
   },
@@ -19,7 +19,7 @@
     "id": "2002-03",
     "label": "2002/03 · estimated",
     "clubs": 20,
-    "players": 309,
+    "players": 358,
     "winnerPts": 83,
     "estimated": true
   },
@@ -27,7 +27,7 @@
     "id": "2003-04",
     "label": "2003/04 · The Invincibles · est.",
     "clubs": 20,
-    "players": 340,
+    "players": 376,
     "winnerPts": 90,
     "estimated": true
   },
@@ -35,7 +35,7 @@
     "id": "2004-05",
     "label": "2004/05 · estimated",
     "clubs": 20,
-    "players": 365,
+    "players": 392,
     "winnerPts": 95,
     "estimated": true
   },
@@ -43,7 +43,7 @@
     "id": "2005-06",
     "label": "2005/06 · estimated",
     "clubs": 20,
-    "players": 399,
+    "players": 420,
     "winnerPts": 91,
     "estimated": true
   },
@@ -51,7 +51,7 @@
     "id": "2007-08",
     "label": "2007/08 · Ronaldo · est.",
     "clubs": 20,
-    "players": 416,
+    "players": 445,
     "winnerPts": 87,
     "estimated": true
   },
@@ -59,7 +59,7 @@
     "id": "2008-09",
     "label": "2008/09 · estimated",
     "clubs": 20,
-    "players": 417,
+    "players": 443,
     "winnerPts": 90,
     "estimated": true
   },
@@ -67,7 +67,7 @@
     "id": "2009-10",
     "label": "2009/10 · estimated",
     "clubs": 20,
-    "players": 424,
+    "players": 450,
     "winnerPts": 86,
     "estimated": true
   },
@@ -75,7 +75,7 @@
     "id": "2010-11",
     "label": "2010/11 · estimated",
     "clubs": 20,
-    "players": 438,
+    "players": 466,
     "winnerPts": 80,
     "estimated": true
   },
@@ -83,7 +83,7 @@
     "id": "2011-12",
     "label": "2011/12 · Aguerooo · est.",
     "clubs": 20,
-    "players": 452,
+    "players": 473,
     "winnerPts": 89,
     "estimated": true
   },
@@ -91,7 +91,7 @@
     "id": "2012-13",
     "label": "2012/13 · Fergie’s last · est.",
     "clubs": 20,
-    "players": 439,
+    "players": 473,
     "winnerPts": 89,
     "estimated": true
   },
@@ -99,7 +99,7 @@
     "id": "2013-14",
     "label": "2013/14 · estimated",
     "clubs": 20,
-    "players": 442,
+    "players": 466,
     "winnerPts": 86,
     "estimated": true
   },

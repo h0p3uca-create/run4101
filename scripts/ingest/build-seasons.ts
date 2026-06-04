@@ -110,6 +110,8 @@ function standings(text: string): ClubRow[] {
 function normClub(name: string): string {
   return name.toLowerCase().replace(/&/g, 'and').replace(/\b(fc|afc|cf)\b/g, '').replace(/[^a-z]/g, '').trim();
 }
+// Canonical display name across seasons (openfootball added " FC" suffixes ~2020).
+const displayName = (s: string) => s.replace(/\s+FC$/, '').trim();
 function tier(pos: number): ClubRow['club'] extends never ? never : 'title' | 'europe' | 'mid' | 'relegation' {
   return (pos < 4 ? 'title' : pos < 7 ? 'europe' : pos < 17 ? 'mid' : 'relegation') as never;
 }
@@ -305,7 +307,7 @@ async function build() {
         .map((p) => applyPerfBonus(p, perf, season.id, ck, finishBonus))
         .sort((a, b) => b.rating - a.rating).slice(0, 24);
       const str = squadStrength(squad, (10.5 - (i + 1)) * 0.3);
-      return { id: ck, name: c.club, pos: i + 1, pts: c.pts, gf: c.gf, ga: c.ga, tier: tier(i), attack: str.attack, defense: str.defense, squad };
+      return { id: ck, name: displayName(c.club), pos: i + 1, pts: c.pts, gf: c.gf, ga: c.ga, tier: tier(i), attack: str.attack, defense: str.defense, squad };
     });
 
     const players = clubs.reduce((n, c) => n + c.squad.length, 0);
