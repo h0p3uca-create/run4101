@@ -12,7 +12,6 @@ import {
 import { eligible } from '@/lib/engine/positions';
 import Pitch from './Pitch';
 import BoxScore from './BoxScore';
-import { PosBadge, RatingPill } from './PlayerChip';
 
 export default function RollBuild({
   state,
@@ -65,7 +64,7 @@ export default function RollBuild({
   }
 
   return (
-    <div className="mx-auto grid max-w-6xl gap-5 px-4 py-6 lg:grid-cols-[320px_1fr_270px]">
+    <div className="mx-auto grid max-w-6xl gap-6 px-4 py-6 lg:grid-cols-[300px_1fr_260px]">
       {/* Left: roll / draw / pick */}
       <div className="order-2 space-y-4 lg:order-1">
         <div className="flex items-center justify-between">
@@ -136,7 +135,7 @@ export default function RollBuild({
             <p className="pt-1 text-xs uppercase tracking-widest text-[var(--color-muted)]">
               Pick a player
             </p>
-            <div className="grid max-h-[44vh] grid-cols-1 gap-1.5 overflow-y-auto pr-1">
+            <div className="max-h-[44vh] overflow-y-auto rounded-[var(--radius)] border border-[var(--card-line)] bg-[var(--card)]">
               {[...state.drawn.squad]
                 .sort((a, b) => b.rating - a.rating)
                 .map((p) => {
@@ -147,18 +146,22 @@ export default function RollBuild({
                       data-testid={`pick-${p.id}`}
                       disabled={!ok}
                       onClick={() => handlePick(p.id)}
-                      className={`flex items-center gap-2 rounded-[var(--radius)] border px-2 py-1.5 text-left transition-colors ${
+                      className={`flex w-full items-center gap-3 border-b border-[var(--card-line)] px-3 py-2 text-left transition-colors last:border-0 ${
                         ok
-                          ? 'border-[var(--card-line)] hover:border-[var(--color-accent)] hover:bg-[color-mix(in_srgb,var(--color-accent)_10%,transparent)] cursor-pointer'
-                          : 'border-transparent opacity-30'
+                          ? 'hover:bg-[color-mix(in_srgb,var(--color-accent)_12%,transparent)] cursor-pointer'
+                          : 'opacity-30'
                       }`}
                     >
-                      <PosBadge pos={p.pos} />
-                      <span className="flex-1 truncate text-sm font-medium">{p.name}</span>
-                      <span className="hidden text-[9px] text-[var(--color-muted)] sm:inline">
-                        {(p.positions ?? []).join('/')}
+                      <span className="flex-1 truncate text-sm font-semibold">{p.name}</span>
+                      <span className="text-[9px] font-bold uppercase tracking-wider text-[var(--color-muted)]">
+                        {(p.positions ?? [p.pos]).join('/')}
                       </span>
-                      <RatingPill value={p.rating} />
+                      <span
+                        className="w-7 text-right text-base font-black tabular-nums"
+                        style={{ fontFamily: 'var(--font-numeral)' }}
+                      >
+                        {p.rating}
+                      </span>
                     </button>
                   );
                 })}
@@ -168,7 +171,7 @@ export default function RollBuild({
       </div>
 
       {/* Center: the big XI (hero — first on mobile) */}
-      <div className="order-1 space-y-2 lg:order-2">
+      <div className="order-1 space-y-2 lg:order-2 lg:border-l lg:border-[var(--card-line)] lg:pl-6">
         <Pitch
           formation={state.formation}
           placed={state.placed}
@@ -196,7 +199,7 @@ export default function RollBuild({
       </div>
 
       {/* Right: box score */}
-      <div className="order-3">
+      <div className="order-3 lg:border-l lg:border-[var(--card-line)] lg:pl-6">
         <BoxScore formation={state.formation} placed={state.placed} strength={str} />
       </div>
     </div>

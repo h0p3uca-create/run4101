@@ -134,15 +134,26 @@ export default function Game() {
 
   return (
     <main className="min-h-screen">
-      <header className="flex items-center justify-between px-4 py-3">
+      <header
+        className={`flex items-center justify-between px-4 py-3 ${
+          phase !== 'setup' ? 'border-b-2 border-[var(--fg)]' : ''
+        }`}
+      >
         <button
           onClick={() => setPhase('setup')}
-          className="text-sm font-black tracking-tight"
+          className="text-xl font-black tracking-tight"
           style={{ fontFamily: 'var(--font-display)' }}
         >
-          Gofor<span className="text-[var(--color-accent)]">101</span>
+          GOFOR<span className="text-[var(--color-accent)]">101</span>
         </button>
-        <ThemeToggle />
+        <div className="flex items-center gap-4">
+          {phase === 'build' && (
+            <span className="hidden text-xs font-bold uppercase tracking-widest text-[var(--color-muted)] sm:inline">
+              {formationId} · {mode === 'main' ? 'All-time' : seasonId}
+            </span>
+          )}
+          <ThemeToggle />
+        </div>
       </header>
 
       {loading && (
