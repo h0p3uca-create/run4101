@@ -112,8 +112,9 @@ function normClub(name: string): string {
 }
 // Canonical display name across seasons (openfootball added " FC" suffixes ~2020).
 const displayName = (s: string) => s.replace(/\s+FC$/, '').trim();
-function tier(pos: number): ClubRow['club'] extends never ? never : 'title' | 'europe' | 'mid' | 'relegation' {
-  return (pos < 4 ? 'title' : pos < 7 ? 'europe' : pos < 17 ? 'mid' : 'relegation') as never;
+type Tier = 'title' | 'europe' | 'mid' | 'relegation';
+function tier(pos: number): Tier {
+  return pos < 4 ? 'title' : pos < 7 ? 'europe' : pos < 17 ? 'mid' : 'relegation';
 }
 
 interface PlayerSeason { id: string; name: string; pos: Position; positions: string[]; att: number; def: number; rating: number; }

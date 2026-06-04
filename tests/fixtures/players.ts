@@ -1,4 +1,4 @@
-import type { Player } from '../types';
+import type { Player } from '@/lib/types';
 
 // All-time Premier League-era (1992+) pool. Ratings are subjective/derived
 // for gameplay balance — att (attacking output), def (defensive output),

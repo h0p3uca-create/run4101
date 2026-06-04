@@ -36,6 +36,7 @@ function randomSeed(): string {
 export default function Game() {
   const [phase, setPhase] = useState<Phase>('setup');
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [mode, setMode] = useState<BuildMode>('main');
   const [seasonId, setSeasonId] = useState<string | null>(null);
   const [seasonLabel, setSeasonLabel] = useState('All-time');
@@ -50,6 +51,7 @@ export default function Game() {
 
   async function startSeed(m: BuildMode, sId: string | null, fId: string, seedStr: string) {
     setLoading(true);
+    setLoadError(null);
     try {
       let label = 'All-time';
       let pts = 0;
@@ -76,6 +78,10 @@ export default function Game() {
       setResult(null);
       setShared(false);
       setPhase('build');
+    } catch (err) {
+      console.error('Failed to start session:', err);
+      setLoadError("Couldn't load the squad data. Check your connection and try again.");
+      setPhase('setup');
     } finally {
       setLoading(false);
     }
@@ -169,6 +175,16 @@ export default function Game() {
         </div>
       )}
 
+      {phase === 'setup' && loadError && (
+        <div
+          role="alert"
+          className="mx-auto mt-4 max-w-6xl px-6"
+        >
+          <div className="rounded-[var(--radius)] border border-[var(--color-accent-2)] bg-[color-mix(in_srgb,var(--color-accent-2)_10%,transparent)] px-4 py-3 text-sm font-semibold text-[var(--color-accent-2)]">
+            {loadError}
+          </div>
+        </div>
+      )}
       {phase === 'setup' && <SetupScreen onStart={start} />}
       {phase === 'build' && build && (
         <RollBuild

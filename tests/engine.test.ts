@@ -6,7 +6,7 @@ import {
   teamStrength,
   simulateSeason,
 } from '../lib/engine';
-import { PLAYERS, PLAYERS_BY_ID } from '../lib/data/players';
+import { PLAYERS, PLAYERS_BY_ID } from './fixtures/players';
 import { OPPONENTS } from '../lib/data/opponents';
 
 describe('rng', () => {
