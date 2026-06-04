@@ -42,6 +42,8 @@ export interface Season {
   label: string;
   /** Real champion's points that season — the bar to beat. */
   winnerPts: number;
+  /** True when ratings are synthesised (pre-2014 classic seasons). */
+  estimated?: boolean;
   clubs: SeasonClub[];
 }
 
@@ -51,6 +53,7 @@ export interface SeasonMeta {
   clubs: number;
   players: number;
   winnerPts: number;
+  estimated?: boolean;
 }
 
 export interface FormationSlots {
