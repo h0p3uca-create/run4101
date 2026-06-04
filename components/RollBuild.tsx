@@ -63,7 +63,7 @@ export default function RollBuild({
   return (
     <div className="mx-auto grid max-w-6xl gap-5 px-4 py-6 lg:grid-cols-[320px_1fr_270px]">
       {/* Left: roll / draw / pick */}
-      <div className="space-y-4">
+      <div className="order-2 space-y-4 lg:order-1">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-xs uppercase tracking-widest text-[var(--color-muted)]">
@@ -154,8 +154,8 @@ export default function RollBuild({
         )}
       </div>
 
-      {/* Center: the big XI */}
-      <div className="space-y-2">
+      {/* Center: the big XI (hero — first on mobile) */}
+      <div className="order-1 space-y-2 lg:order-2">
         <Pitch
           formation={state.formation}
           placed={state.placed}
@@ -171,7 +171,9 @@ export default function RollBuild({
       </div>
 
       {/* Right: box score */}
-      <BoxScore formation={state.formation} placed={state.placed} strength={str} />
+      <div className="order-3">
+        <BoxScore formation={state.formation} placed={state.placed} strength={str} />
+      </div>
     </div>
   );
 }
