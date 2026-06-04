@@ -8,6 +8,12 @@ export const DEFAULT_SEASON_ID = SEASONS_INDEX[0]?.id ?? '2017-18';
 
 // Static map of dynamic importers → one lazy chunk per season.
 const LOADERS: Record<string, () => Promise<{ default: unknown }>> = {
+  '2000-01': () => import('./seasons/2000-01.json'),
+  '2001-02': () => import('./seasons/2001-02.json'),
+  '2002-03': () => import('./seasons/2002-03.json'),
+  '2003-04': () => import('./seasons/2003-04.json'),
+  '2004-05': () => import('./seasons/2004-05.json'),
+  '2005-06': () => import('./seasons/2005-06.json'),
   '2007-08': () => import('./seasons/2007-08.json'),
   '2008-09': () => import('./seasons/2008-09.json'),
   '2009-10': () => import('./seasons/2009-10.json'),

@@ -1,5 +1,53 @@
 [
   {
+    "id": "2000-01",
+    "label": "2000/01 · estimated",
+    "clubs": 20,
+    "players": 302,
+    "winnerPts": 80,
+    "estimated": true
+  },
+  {
+    "id": "2001-02",
+    "label": "2001/02 · Arsenal double · est.",
+    "clubs": 20,
+    "players": 317,
+    "winnerPts": 87,
+    "estimated": true
+  },
+  {
+    "id": "2002-03",
+    "label": "2002/03 · estimated",
+    "clubs": 20,
+    "players": 309,
+    "winnerPts": 83,
+    "estimated": true
+  },
+  {
+    "id": "2003-04",
+    "label": "2003/04 · The Invincibles · est.",
+    "clubs": 20,
+    "players": 340,
+    "winnerPts": 90,
+    "estimated": true
+  },
+  {
+    "id": "2004-05",
+    "label": "2004/05 · estimated",
+    "clubs": 20,
+    "players": 365,
+    "winnerPts": 95,
+    "estimated": true
+  },
+  {
+    "id": "2005-06",
+    "label": "2005/06 · estimated",
+    "clubs": 20,
+    "players": 399,
+    "winnerPts": 91,
+    "estimated": true
+  },
+  {
     "id": "2007-08",
     "label": "2007/08 · Ronaldo · est.",
     "clubs": 20,

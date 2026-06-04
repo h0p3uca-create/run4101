@@ -24,15 +24,21 @@ const PROFILES = join(CACHE, 'tm_profiles.csv');
 const OF_RAW = 'https://raw.githubusercontent.com/openfootball/england/master';
 
 // season_name "07/08" → id "2007-08"
-const TARGET = ['07/08', '08/09', '09/10', '10/11', '11/12', '12/13', '13/14'];
+const TARGET = ['00/01', '01/02', '02/03', '03/04', '04/05', '05/06', '07/08', '08/09', '09/10', '10/11', '11/12', '12/13', '13/14'];
 const LABELS: Record<string, string> = {
+  '2000-01': '2000/01 · estimated',
+  '2001-02': '2001/02 · Arsenal double · est.',
+  '2002-03': '2002/03 · estimated',
+  '2003-04': '2003/04 · The Invincibles · est.',
+  '2004-05': '2004/05 · estimated',
+  '2005-06': '2005/06 · estimated',
+  '2007-08': '2007/08 · Ronaldo · est.',
   '2008-09': '2008/09 · estimated',
   '2009-10': '2009/10 · estimated',
   '2010-11': '2010/11 · estimated',
   '2011-12': '2011/12 · Aguerooo · est.',
   '2012-13': '2012/13 · Fergie’s last · est.',
   '2013-14': '2013/14 · estimated',
-  '2007-08': '2007/08 · Ronaldo · est.',
 };
 function seasonId(sn: string): string {
   const [a] = sn.split('/');
