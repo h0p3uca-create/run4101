@@ -36,6 +36,21 @@ export default function SetupScreen({ onStart }: { onStart: (o: StartOptions) =>
         </p>
       </div>
 
+      {/* How to play */}
+      <ol className="grid w-full grid-cols-3 gap-2 text-center">
+        {[
+          { n: '🎲', t: 'Roll', d: 'Draw a real club' },
+          { n: '⚽', t: 'Pick', d: 'Place & slide players into positions' },
+          { n: '🏆', t: 'Simulate', d: `38 games · reach ${TARGET_POINTS}` },
+        ].map((s, i) => (
+          <li key={i} className="rounded-[var(--radius)] border border-[var(--card-line)] p-3">
+            <div className="text-xl">{s.n}</div>
+            <div className="mt-1 text-xs font-bold uppercase tracking-wider">{s.t}</div>
+            <div className="text-[10px] leading-tight text-[var(--color-muted)]">{s.d}</div>
+          </li>
+        ))}
+      </ol>
+
       {/* Formation */}
       <div className="w-full space-y-3">
         <p className="text-left text-xs uppercase tracking-widest text-[var(--color-muted)]">
@@ -68,7 +83,7 @@ export default function SetupScreen({ onStart }: { onStart: (o: StartOptions) =>
         Play · All-time XI
       </button>
       <p className="-mt-5 text-xs text-[var(--color-muted)]">
-        Draw any club from any season (2014/15–2022/23) and build a dream XI.
+        Draw any club from any season (2000/01–2022/23) and build a dream XI.
       </p>
 
       {/* Challenges */}
