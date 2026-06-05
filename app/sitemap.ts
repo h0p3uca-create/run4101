@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next';
 
-const SITE = 'https://runfor101.com';
+const SITE = 'https://runfor101.vercel.app';
 
 export const dynamic = 'force-static';
 

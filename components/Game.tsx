@@ -218,7 +218,7 @@ export default function Game() {
   function onShare() {
     if (!result) return;
     const origin =
-      typeof window !== 'undefined' ? window.location.origin : 'https://runfor101.com';
+      typeof window !== 'undefined' ? window.location.origin : 'https://runfor101.vercel.app';
     const url = `${origin}/?s=${encodeURIComponent(seed)}&f=${formationId}`;
     const tag = mode === 'challenge' && seasonId ? seasonId : 'all-time';
     const text =
