@@ -13,12 +13,14 @@ const COMPAT: Record<string, string[]> = {
   CDM: ['CDM', 'CM'],
   CM: ['CM', 'CDM', 'CAM'],
   CAM: ['CAM', 'CM', 'CF'],
-  LM: ['LM', 'LW', 'LWB'],
-  RM: ['RM', 'RW', 'RWB'],
-  LW: ['LW', 'LM', 'LF'],
-  RW: ['RW', 'RM', 'RF'],
-  ST: ['ST', 'CF', 'LS', 'RS'],
-  CF: ['CF', 'ST', 'CAM'],
+  LM: ['LM', 'LW', 'LWB', 'RM'],
+  RM: ['RM', 'RW', 'RWB', 'LM'],
+  // The front line is interchangeable: a winger can slot at ST and either wing,
+  // a striker can cut out wide. Keeps the dream-XI build from feeling restrictive.
+  LW: ['LW', 'LM', 'LF', 'RW', 'CF', 'ST'],
+  RW: ['RW', 'RM', 'RF', 'LW', 'CF', 'ST'],
+  ST: ['ST', 'CF', 'LS', 'RS', 'LW', 'RW'],
+  CF: ['CF', 'ST', 'CAM', 'LW', 'RW'],
 };
 
 function playerCodes(p: Player): string[] {

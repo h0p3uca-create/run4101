@@ -8,18 +8,29 @@
 const norm = (s: string) =>
   s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z]/g, '');
 
+/** Stable key from a (resolved) full name — diacritics/punctuation-insensitive. */
+export function nameKey(name: string): string {
+  return norm(name);
+}
+
 /**
- * Match both "Cristiano Ronaldo" and "C. Ronaldo" → "c|ronaldo".
- * Single-token names (Rodri, Alisson, Richarlison) use the WHOLE token — never
- * an empty surname, which would collapse every single-name player who shares a
- * first initial into one (Rodri→Richarlison, Alisson→Azpilicueta).
+ * Initial+surname bucket — used ONLY to resolve abbreviated "F. Surname" forms
+ * to a unique full name (see apply-overrides). Distinct full first names that
+ * share it (Roy vs Robbie Keane) are kept apart by nameKey, not merged.
  */
-export function mergeKey(name: string): string {
+export function bucketKey(name: string): string {
   const parts = name.replace(/\./g, '').trim().split(/\s+/);
   if (parts.length === 1) return norm(parts[0]);
   const initial = (parts[0][0] ?? '').toLowerCase();
   return `${initial}|${norm(parts.slice(1).join(''))}`;
 }
+
+export const isAbbreviated = (name: string) => {
+  const first = name.replace(/\./g, '').trim().split(/\s+/)[0] ?? '';
+  return name.trim().split(/\s+/).length > 1 && first.length === 1;
+};
+export const firstName = (name: string) => name.trim().split(/\s+/)[0];
+export const surname = (name: string) => name.replace(/\./g, '').trim().split(/\s+/).slice(1).join(' ');
 
 // [canonical display name, target peak rating]
 const ENTRIES: [string, number][] = [
@@ -65,7 +76,25 @@ const ENTRIES: [string, number][] = [
   ['Troy Deeney', 81], ['Ashley Barnes', 80], ['Manolo Gabbiadini', 80],
 ];
 
-/** mergeKey → { target, canonical display name } */
+/** nameKey → { target, canonical display name } */
 export const OVERRIDES = new Map(
-  ENTRIES.map(([name, target]) => [mergeKey(name), { target, canonical: name }]),
+  ENTRIES.map(([name, target]) => [nameKey(name), { target, canonical: name }]),
 );
+
+// Curated POSITION alternatives — extra FIFA codes for versatile attackers the
+// source data pins to one role (Henry only ST, Bale only RW…). Merged on top of
+// the systematic adjacent-code expansion in apply-overrides. [name, extra codes].
+const POS_ENTRIES: [string, string[]][] = [
+  ['Thierry Henry', ['LW']], ['Robin van Persie', ['LW']], ['Luis Suárez', ['LW', 'CF']],
+  ['Carlos Tevez', ['RW', 'CF']], ['Lukas Podolski', ['LW']], ['Alexander Isak', ['LW']],
+  ['Nicolas Anelka', ['LW']], ['Louis Saha', ['LW']], ['Emmanuel Adebayor', ['RW']],
+  ['Gareth Bale', ['LW', 'ST']], ['Bukayo Saka', ['LW']], ['Gabriel Martinelli', ['ST', 'RW']],
+  ['Arjen Robben', ['LW']], ['Craig Bellamy', ['ST', 'RW']], ['Harry Kewell', ['ST']],
+  ['Salomon Kalou', ['RW', 'ST']], ['Damien Duff', ['LW']], ['André Schürrle', ['RW']],
+  ['Kevin Mirallas', ['LW', 'ST']], ['Yossi Benayoun', ['LW']], ['Luis García', ['LW']],
+  ['Gianfranco Zola', ['CAM', 'ST']], ['Clint Dempsey', ['ST', 'LW']], ['Dimitar Berbatov', ['CAM']],
+  ['Eidur Gudjohnsen', ['CAM']],
+];
+
+/** nameKey → extra position codes to add. */
+export const POSITION_OVERRIDES = new Map(POS_ENTRIES.map(([name, codes]) => [nameKey(name), codes]));
