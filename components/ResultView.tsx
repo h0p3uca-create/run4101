@@ -92,6 +92,12 @@ export default function ResultView({
 }) {
   const [showMatches, setShowMatches] = useState(false);
   const shownPoints = useCountUp(result.points);
+  // drives the bars filling from 0 on mount
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setMounted(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
   const str = teamStrength(xi);
   const hit = result.reachedTarget;
   const beatChampion = result.points > winnerPts;
@@ -115,7 +121,7 @@ export default function ResultView({
       </h1>
       {/* ── Hero band ───────────────────────────────────────── */}
       <div
-        className={`relative overflow-hidden rounded-2xl border bg-[var(--card)] px-6 py-8 text-center ${
+        className={`animate-rise relative overflow-hidden rounded-2xl border bg-[var(--card)] px-6 py-8 text-center ${
           hit ? 'border-[var(--color-accent)]' : 'border-[var(--card-line)]'
         }`}
       >
@@ -168,8 +174,8 @@ export default function ResultView({
             className="relative h-3 w-full overflow-hidden rounded-full bg-[color-mix(in_srgb,var(--fg)_12%,transparent)]"
           >
             <div
-              className="h-full rounded-full transition-all"
-              style={{ width: `${pct}%`, background: hit ? 'var(--color-accent)' : 'var(--color-accent-3)' }}
+              className="h-full rounded-full transition-[width] duration-[900ms] ease-out"
+              style={{ width: `${mounted ? pct : 0}%`, background: hit ? 'var(--color-accent)' : 'var(--color-accent-3)' }}
             />
           </div>
           <div
@@ -203,7 +209,10 @@ export default function ResultView({
       </div>
 
       {/* ── Two columns: the XI on a pitch · the numbers ─────── */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]">
+      <div
+        className="animate-rise grid gap-6 md:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]"
+        style={{ animationDelay: '120ms' }}
+      >
         {/* Left — the XI */}
         <div>
           {formation && placed ? (
@@ -224,15 +233,15 @@ export default function ResultView({
         <div className="flex flex-col gap-4">
           {/* W/D/L shape */}
           <div>
-            <div className="flex h-2.5 w-full overflow-hidden rounded-full" aria-hidden="true">
+            <div className="flex h-2.5 w-full overflow-hidden rounded-full bg-[color-mix(in_srgb,var(--fg)_8%,transparent)]" aria-hidden="true">
               {result.won > 0 && (
-                <div style={{ width: `${(result.won / total) * 100}%`, background: 'var(--color-accent)' }} />
+                <div className="transition-[width] duration-[800ms] ease-out" style={{ width: `${mounted ? (result.won / total) * 100 : 0}%`, background: 'var(--color-accent)' }} />
               )}
               {result.drawn > 0 && (
-                <div style={{ width: `${(result.drawn / total) * 100}%`, background: 'var(--color-muted)' }} />
+                <div className="transition-[width] duration-[800ms] ease-out" style={{ width: `${mounted ? (result.drawn / total) * 100 : 0}%`, background: 'var(--color-muted)' }} />
               )}
               {result.lost > 0 && (
-                <div style={{ width: `${(result.lost / total) * 100}%`, background: 'var(--color-accent-2)' }} />
+                <div className="transition-[width] duration-[800ms] ease-out" style={{ width: `${mounted ? (result.lost / total) * 100 : 0}%`, background: 'var(--color-accent-2)' }} />
               )}
             </div>
             <div className="mt-2 grid grid-cols-3 gap-2">
@@ -327,7 +336,7 @@ export default function ResultView({
       )}
 
       {/* actions */}
-      <div className="flex flex-col gap-3 sm:flex-row">
+      <div className="animate-rise flex flex-col gap-3 sm:flex-row" style={{ animationDelay: '220ms' }}>
         <button
           onClick={onShare}
           className="flex-1 rounded-[var(--radius)] border border-[var(--card-line)] px-6 py-3 font-bold transition-colors hover:border-[var(--color-accent)]"

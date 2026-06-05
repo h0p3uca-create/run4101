@@ -15,7 +15,8 @@ export interface StartOptions {
   daily: boolean;
 }
 
-const FEATURED = '2017-18';
+// The legendary City–Liverpool title race (98 vs 97 — closest in PL history).
+const FEATURED = '2018-19';
 
 // Decorative dream XI for the hero pitch.
 const DREAM: Record<string, { name: string; rating: number; pos: Player['pos']; code: string }> = {
@@ -160,8 +161,11 @@ export default function SetupScreen({ onStart }: { onStart: (o: StartOptions) =>
                     Today&apos;s Challenge
                   </span>
                   <span className="font-bold">{featured.label}</span>
+                  <span className="block text-[11px] text-[var(--color-muted)]">
+                    City vs Liverpool — the closest title race ever
+                  </span>
                 </span>
-                <span className="text-xs text-[var(--color-muted)]">champ {featured.winnerPts}</span>
+                <span className="shrink-0 text-xs text-[var(--color-muted)]">champ {featured.winnerPts}</span>
               </button>
             )}
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
