@@ -13,12 +13,11 @@ interface TierSpec {
   defense: number;
 }
 
-// Main mode draws club ERAS (peak-window squads, with the 90+ cluster thinned
-// so each great era has only ~1–3 elites). This small boost keeps 101 a rare
-// feat: a GLOBAL-optimal XI reaches it ~8% of seasons, random XIs ~0%. The
-// engine keys on strength DIFFERENCES, so a uniform lift preserves balance.
-// Re-tune with: npm run calibrate:eras.
-const ERA_OPPONENT_BOOST = 1;
+// Main mode draws club ERAS, and team strength is star-weighted (a standout
+// lifts the side). This boost keeps 101 a rare feat after both: a GLOBAL-optimal
+// XI reaches it ~8% of seasons, random XIs ~0%. The engine keys on strength
+// DIFFERENCES, so a uniform lift preserves balance. Re-tune: npm run calibrate:eras.
+const ERA_OPPONENT_BOOST = 2;
 
 const TIERS: TierSpec[] = [
   { tier: 'title', attack: 90 + ERA_OPPONENT_BOOST, defense: 88 + ERA_OPPONENT_BOOST },

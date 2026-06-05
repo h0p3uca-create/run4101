@@ -33,3 +33,11 @@ export const RATING_WEIGHTS = {
   attack: { FWD: 0.5, MID: 0.35, DEF: 0.15 },
   defense: { GK: 0.3, DEF: 0.45, MID: 0.25 },
 };
+
+/**
+ * How much the BEST player in a position group lifts that group's contribution
+ * beyond a flat average (0 = pure mean, 1 = only the star counts). Attack leans
+ * on stars harder — a world-class scorer or creator swings games, so a single
+ * 91 striker among 78s noticeably raises the attack axis.
+ */
+export const STAR_WEIGHT = { attack: 0.4, defense: 0.28 };
