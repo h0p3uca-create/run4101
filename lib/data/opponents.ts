@@ -18,7 +18,7 @@ interface TierSpec {
 // all three: a GLOBAL-optimal XI reaches it ~10% of seasons, random XIs ~0%. The
 // engine keys on strength DIFFERENCES, so a uniform lift preserves balance.
 // Re-tune: npm run calibrate:eras.
-const ERA_OPPONENT_BOOST = 3;
+const ERA_OPPONENT_BOOST = 2;
 
 const TIERS: TierSpec[] = [
   { tier: 'title', attack: 90 + ERA_OPPONENT_BOOST, defense: 88 + ERA_OPPONENT_BOOST },

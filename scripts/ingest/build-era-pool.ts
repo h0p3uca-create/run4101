@@ -34,6 +34,7 @@ const WINDOWS = [
   { id: '10-15', start: 2010, end: 2014 },
   { id: '15-20', start: 2015, end: 2019 },
   { id: '20-23', start: 2020, end: 2022 },
+  { id: '23-26', start: 2023, end: 2025 },
 ] as const;
 
 // Keep each era tight & strong: top-N per position. Trimmed so the pick list is

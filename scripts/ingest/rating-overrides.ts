@@ -5,18 +5,20 @@
 // apply-overrides.ts shifts their whole career curve by (target − currentPeak),
 // so the shape is preserved and re-running is idempotent.
 
-/** Match both "Cristiano Ronaldo" and "C. Ronaldo" → "c|ronaldo". */
+const norm = (s: string) =>
+  s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z]/g, '');
+
+/**
+ * Match both "Cristiano Ronaldo" and "C. Ronaldo" → "c|ronaldo".
+ * Single-token names (Rodri, Alisson, Richarlison) use the WHOLE token — never
+ * an empty surname, which would collapse every single-name player who shares a
+ * first initial into one (Rodri→Richarlison, Alisson→Azpilicueta).
+ */
 export function mergeKey(name: string): string {
   const parts = name.replace(/\./g, '').trim().split(/\s+/);
+  if (parts.length === 1) return norm(parts[0]);
   const initial = (parts[0][0] ?? '').toLowerCase();
-  const surname = parts
-    .slice(1)
-    .join('')
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .replace(/[^a-z]/g, '');
-  return `${initial}|${surname}`;
+  return `${initial}|${norm(parts.slice(1).join(''))}`;
 }
 
 // [canonical display name, target peak rating]

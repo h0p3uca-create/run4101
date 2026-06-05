@@ -16,7 +16,8 @@
     "calibrate:eras": "tsx scripts/ingest/calibrate-eras.ts",
     "build:pool": "tsx scripts/ingest/build-era-pool.ts",
     "audit": "tsx scripts/audit-system.ts",
-    "apply-overrides": "tsx scripts/ingest/apply-overrides.ts"
+    "apply-overrides": "tsx scripts/ingest/apply-overrides.ts",
+    "build:recent": "tsx scripts/ingest/build-recent.ts"
   },
   "dependencies": {
     "next": "16.2.7",

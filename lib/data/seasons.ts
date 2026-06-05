@@ -30,6 +30,9 @@ const LOADERS: Record<string, () => Promise<{ default: unknown }>> = {
   '2020-21': () => import('./seasons/2020-21.json'),
   '2021-22': () => import('./seasons/2021-22.json'),
   '2022-23': () => import('./seasons/2022-23.json'),
+  '2023-24': () => import('./seasons/2023-24.json'),
+  '2024-25': () => import('./seasons/2024-25.json'),
+  '2025-26': () => import('./seasons/2025-26.json'),
 };
 
 const cache = new Map<string, Season>();

@@ -165,5 +165,27 @@
     "clubs": 20,
     "players": 480,
     "winnerPts": 89
+  },
+  {
+    "id": "2023-24",
+    "label": "Premier League 2023-24",
+    "clubs": 20,
+    "players": 356,
+    "winnerPts": 91
+  },
+  {
+    "id": "2024-25",
+    "label": "Premier League 2024-25",
+    "clubs": 20,
+    "players": 367,
+    "winnerPts": 84
+  },
+  {
+    "id": "2025-26",
+    "label": "Premier League 2025-26",
+    "clubs": 20,
+    "players": 354,
+    "winnerPts": 84,
+    "estimated": true
   }
 ]
