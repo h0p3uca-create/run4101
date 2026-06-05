@@ -20,6 +20,7 @@
     "build:recent": "tsx scripts/ingest/build-recent.ts"
   },
   "dependencies": {
+    "@vercel/analytics": "^2.0.1",
     "next": "16.2.7",
     "react": "19.2.7",
     "react-dom": "19.2.7"

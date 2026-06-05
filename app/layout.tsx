@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Anton, Archivo, Inter } from 'next/font/google';
+import { Analytics } from '@vercel/analytics/next';
 import './globals.css';
 
 // Self-hosted at build time (works with output: export).
@@ -47,6 +48,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT }} />
         {children}
+        <Analytics />
       </body>
     </html>
   );
