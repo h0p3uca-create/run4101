@@ -1,9 +1,11 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { Player } from '@/lib/types';
 import { FORMATIONS, getFormation } from '@/lib/data/formations';
 import { SEASONS_INDEX } from '@/lib/data/seasons';
 import { TARGET_POINTS } from '@/lib/engine/config';
+import { DIFFICULTIES, type Difficulty } from '@/lib/data/opponents';
+import { readStats, type PlayStats } from '@/lib/stats';
 import Pitch from './Pitch';
 import Icon from './Icon';
 
@@ -12,6 +14,7 @@ export interface StartOptions {
   mode: StartMode;
   seasonId: string | null;
   formationId: string;
+  difficulty: Difficulty;
   daily: boolean;
 }
 
@@ -41,8 +44,14 @@ const DREAM_PLACED: Record<string, Player> = Object.fromEntries(
 
 export default function SetupScreen({ onStart }: { onStart: (o: StartOptions) => void }) {
   const [formationId, setFormationId] = useState(FORMATIONS[0].id);
+  const [difficulty, setDifficulty] = useState<Difficulty>('normal');
   const [showChallenges, setShowChallenges] = useState(false);
   const featured = SEASONS_INDEX.find((s) => s.id === FEATURED);
+
+  // Read local play stats after mount (localStorage is client-only — keep the
+  // server/first paint empty to avoid a hydration mismatch).
+  const [stats, setStats] = useState<PlayStats | null>(null);
+  useEffect(() => setStats(readStats()), []);
 
   return (
     <div className="mx-auto max-w-6xl px-6 pb-16 pt-4">
@@ -95,15 +104,64 @@ export default function SetupScreen({ onStart }: { onStart: (o: StartOptions) =>
             ))}
           </div>
 
+          {/* Difficulty */}
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-muted)]">
+              Difficulty
+            </span>
+            {DIFFICULTIES.map((d) => (
+              <button
+                key={d.id}
+                onClick={() => setDifficulty(d.id)}
+                aria-pressed={difficulty === d.id}
+                className={`inline-flex min-h-[40px] items-center rounded-full border px-4 text-xs font-bold uppercase tracking-wide transition-colors ${
+                  difficulty === d.id
+                    ? 'border-[var(--color-accent)] bg-[color-mix(in_srgb,var(--color-accent)_14%,transparent)]'
+                    : 'border-[var(--card-line)] text-[var(--color-muted)] hover:text-[var(--fg)]'
+                }`}
+              >
+                {d.label}
+              </button>
+            ))}
+          </div>
+
           {/* Play */}
           <button
             data-testid="mode-main"
-            onClick={() => onStart({ mode: 'main', seasonId: null, formationId, daily: false })}
+            onClick={() => onStart({ mode: 'main', seasonId: null, formationId, difficulty, daily: false })}
             className="mt-6 inline-flex w-full items-center justify-center gap-2.5 rounded-[var(--radius)] bg-[var(--color-accent-2)] px-6 py-5 text-2xl font-black uppercase tracking-wide text-white shadow-[5px_5px_0_var(--color-pl-ink)] transition-transform hover:-translate-y-0.5 active:translate-y-0 sm:w-auto sm:px-12"
             style={{ fontFamily: 'var(--font-head)' }}
           >
             Roll <Icon name="dice" className="text-[0.9em]" />
           </button>
+
+          {/* Local play stats — only once there's a season on record */}
+          {stats && stats.attempts > 0 && (
+            <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs font-semibold text-[var(--color-muted)]">
+              <span>
+                Your best{' '}
+                <span
+                  className="text-base font-black text-[var(--color-accent)]"
+                  style={{ fontFamily: 'var(--font-numeral)' }}
+                >
+                  {stats.best}
+                </span>{' '}
+                pts
+              </span>
+              <span aria-hidden="true">·</span>
+              <span>
+                {stats.attempts} {stats.attempts === 1 ? 'attempt' : 'attempts'}
+              </span>
+              {stats.records > 0 && (
+                <>
+                  <span aria-hidden="true">·</span>
+                  <span className="text-[var(--color-accent)]">
+                    🏆 {stats.records} record{stats.records === 1 ? '' : 's'} broken
+                  </span>
+                </>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Right — sample pitch */}
@@ -153,7 +211,7 @@ export default function SetupScreen({ onStart }: { onStart: (o: StartOptions) =>
             {featured && (
               <button
                 data-testid="today-challenge"
-                onClick={() => onStart({ mode: 'challenge', seasonId: FEATURED, formationId, daily: true })}
+                onClick={() => onStart({ mode: 'challenge', seasonId: FEATURED, formationId, difficulty, daily: true })}
                 className="flex w-full items-center justify-between rounded-[var(--radius)] border border-[var(--color-accent-2)] bg-[color-mix(in_srgb,var(--color-accent-2)_10%,transparent)] px-4 py-3 text-left transition-transform hover:-translate-y-0.5"
               >
                 <span>

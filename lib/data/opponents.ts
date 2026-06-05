@@ -75,3 +75,26 @@ export const OPPONENTS: Opponent[] = ROSTER.flatMap((group) =>
 if (OPPONENTS.length !== 19) {
   throw new Error(`Expected 19 opponents, got ${OPPONENTS.length}`);
 }
+
+// ── Difficulty tiers ───────────────────────────────────────────────────────
+// An optional uniform lift on top of the calibrated baseline. Normal (+0) is
+// the tuned ~13%-optimal-hit setting; Hard/Brutal raise every opponent's
+// attack & defense, so the same XI scores fewer points. The engine keys on
+// strength DIFFERENCES, so this just shifts the whole curve down.
+export type Difficulty = 'normal' | 'hard' | 'brutal';
+
+export const DIFFICULTIES: { id: Difficulty; label: string; boost: number }[] = [
+  { id: 'normal', label: 'Normal', boost: 0 },
+  { id: 'hard', label: 'Hard', boost: 2 },
+  { id: 'brutal', label: 'Brutal', boost: 4 },
+];
+
+export function difficultyBoost(d: Difficulty): number {
+  return DIFFICULTIES.find((x) => x.id === d)?.boost ?? 0;
+}
+
+/** Apply a difficulty lift to a set of opponents (returns the same array at Normal). */
+export function withDifficulty(opps: Opponent[], d: Difficulty): Opponent[] {
+  const b = difficultyBoost(d);
+  return b ? opps.map((o) => ({ ...o, attack: o.attack + b, defense: o.defense + b })) : opps;
+}

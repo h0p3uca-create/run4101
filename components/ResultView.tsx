@@ -46,6 +46,24 @@ function verdict(points: number, hit: boolean): { label: string; color: string }
   return { label: 'Relegated', color: 'var(--color-accent-2-ink)' };
 }
 
+/** A proportional ~11-square W/D/L bar for comment-section sharing. */
+function wdlBar(won: number, drawn: number, lost: number): string {
+  const total = won + drawn + lost || 1;
+  const N = 11;
+  const g = Math.round((won / total) * N);
+  const y = Math.min(N - g, Math.round((drawn / total) * N));
+  const r = Math.max(0, N - g - y);
+  return '🟩'.repeat(g) + '🟨'.repeat(y) + '🟥'.repeat(r);
+}
+
+/** Verdict-aware dare line — gives wins AND losses a reason to be shared. */
+function dareLine(points: number, label: string, hit: boolean): string {
+  if (hit) return 'Beat the 101 record. Your move 👇';
+  if (points >= 86) return `Same clubs, your XI — beat ${points}? 👇`;
+  if (points >= 64) return `Reckon you can do better? 👇`;
+  return `I got ${label.toLowerCase()} with that squad. You can't do worse… right? 👇`;
+}
+
 /** ["Salah","Salah","Aguero"] → "Salah (2), Aguero" */
 function summariseScorers(scorers: string[]): string {
   const counts = new Map<string, number>();
@@ -114,6 +132,7 @@ export default function ResultView({
   const [showMatches, setShowMatches] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const [shareState, setShareState] = useState<'idle' | 'working' | 'done'>('idle');
+  const [copyState, setCopyState] = useState<'idle' | 'done'>('idle');
   const shownPoints = useCountUp(result.points);
   // drives the bars filling from 0 on mount
   const [mounted, setMounted] = useState(false);
@@ -137,7 +156,29 @@ export default function ResultView({
     ? `🏆 ${TARGET_POINTS} points — you beat the greatest season ever.`
     : result.points >= RECORD_POINTS
       ? `${RECORD_POINTS} points — record matched, ${TARGET_POINTS - result.points} off ${TARGET_POINTS}.`
-      : `${TARGET_POINTS - result.points} points off the record. Run it back?`;
+      : result.points >= 64
+        ? `${TARGET_POINTS - result.points} points off the record. Run it back?`
+        : `Relegation form with that squad. The board wants a word. Run it back?`;
+
+  // The label that travels in shared text — the club/season in challenge mode,
+  // else the all-time framing.
+  const scopeLabel = anonymous ? 'All-time XI' : seasonLabel.split('·')[0].trim();
+
+  // Comment-section-ready plain text (the 7a0/Reddit distribution channel).
+  const commentText =
+    `Runfor101 — ${scopeLabel}: ${result.points} pts (${v.label})\n` +
+    `${wdlBar(result.won, result.drawn, result.lost)} W${result.won} D${result.drawn} L${result.lost} · GF ${result.goalsFor} GA ${result.goalsAgainst}\n` +
+    `${dareLine(result.points, v.label, hit)} ${shareUrl}`;
+
+  async function handleCopy() {
+    try {
+      await navigator.clipboard?.writeText(commentText);
+      setCopyState('done');
+      setTimeout(() => setCopyState('idle'), 2500);
+    } catch {
+      /* clipboard blocked — no-op */
+    }
+  }
 
   // Capture the off-screen scorecard to a PNG and share it (image on mobile,
   // download + copied link on desktop).
@@ -149,7 +190,7 @@ export default function ResultView({
       const blob = await toBlob(cardRef.current, { pixelRatio: 2, cacheBust: true });
       if (!blob) throw new Error('capture failed');
       const file = new File([blob], 'runfor101.png', { type: 'image/png' });
-      const text = `${v.label} — ${result.points}/${TARGET_POINTS} on Runfor101 ⚽ ${shareUrl}`;
+      const text = `${scopeLabel} — ${result.points}/${TARGET_POINTS} pts on Runfor101 ⚽ ${dareLine(result.points, v.label, hit)} ${shareUrl}`;
       if (typeof navigator !== 'undefined' && navigator.canShare?.({ files: [file] })) {
         await navigator.share({ files: [file], text }).catch(() => {});
       } else {
@@ -344,17 +385,15 @@ export default function ResultView({
         </div>
       </div>
 
-      {/* match list (challenge mode only) */}
-      {!anonymous && (
-        <button
-          onClick={() => setShowMatches((s) => !s)}
-          aria-expanded={showMatches}
-          className="inline-flex min-h-[44px] items-center justify-center self-center text-sm font-semibold text-[var(--color-accent-3)] hover:underline"
-        >
-          {showMatches ? 'Hide' : 'Show'} all 38 results
-        </button>
-      )}
-      {!anonymous && showMatches && (
+      {/* match list — the 38-game breakdown (shown in every mode) */}
+      <button
+        onClick={() => setShowMatches((s) => !s)}
+        aria-expanded={showMatches}
+        className="inline-flex min-h-[44px] items-center justify-center self-center text-sm font-semibold text-[var(--color-accent-3)] hover:underline"
+      >
+        {showMatches ? 'Hide' : 'Show'} all 38 results
+      </button>
+      {showMatches && (
         <div className="grid max-h-72 grid-cols-1 gap-1 overflow-y-auto rounded-[var(--radius)] border border-[var(--card-line)] bg-[var(--card)] p-2 sm:grid-cols-2">
           {result.matches.map((m, i) => (
             <div key={i} className="rounded px-2 py-1 text-sm">
@@ -380,6 +419,17 @@ export default function ResultView({
 
       {/* actions */}
       <div className="animate-rise flex flex-col gap-3 sm:flex-row" style={{ animationDelay: '220ms' }}>
+        <button
+          onClick={handleCopy}
+          className="flex flex-1 items-center justify-center gap-2 rounded-[var(--radius)] border border-[var(--card-line)] px-6 py-3 font-bold transition-colors hover:border-[var(--color-accent)]"
+          title="Copy a paste-ready result for comments & chats"
+        >
+          {copyState === 'done' ? '✓ Copied — paste anywhere' : (
+            <>
+              <Icon name="share" /> Copy result
+            </>
+          )}
+        </button>
         <button
           onClick={handleShare}
           disabled={shareState === 'working'}

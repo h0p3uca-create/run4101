@@ -250,6 +250,19 @@ export default function RollBuild({
                           {(p.positions ?? [p.pos]).join(' / ')}
                         </span>
                       </span>
+                      {/* att/def split — exposes the real trade-off the rating hides */}
+                      <span
+                        className="flex shrink-0 flex-col items-end leading-tight tabular-nums"
+                        style={{ fontFamily: 'var(--font-numeral)' }}
+                        aria-label={`Attack ${p.att}, defense ${p.def}`}
+                      >
+                        <span className="text-[10px] font-black text-[var(--color-accent-2-ink)]">
+                          <span className="text-[8px] font-bold text-[var(--color-muted)]">A</span> {p.att}
+                        </span>
+                        <span className="text-[10px] font-black text-[var(--color-accent-3)]">
+                          <span className="text-[8px] font-bold text-[var(--color-muted)]">D</span> {p.def}
+                        </span>
+                      </span>
                       <RatingBadge rating={p.rating} size="sm" />
                     </button>
                   );

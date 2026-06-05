@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useReducer } from 'react';
+import { useEffect, useReducer, useRef } from 'react';
 import type { Opponent, Player, SeasonResult } from '@/lib/types';
 import {
   createRoll,
@@ -17,8 +17,9 @@ import { simulateSeason } from '@/lib/engine/simulate';
 import { dailySeed } from '@/lib/engine/rng';
 import { loadSeason, seasonOpponents, SEASONS_INDEX } from '@/lib/data/seasons';
 import { seasonSources, allTimeSources } from '@/lib/data/pool';
-import { OPPONENTS } from '@/lib/data/opponents';
+import { OPPONENTS, withDifficulty, type Difficulty } from '@/lib/data/opponents';
 import { getFormation } from '@/lib/data/formations';
+import { recordResult } from '@/lib/stats';
 import SetupScreen, { type StartOptions } from './SetupScreen';
 import RollBuild from './RollBuild';
 import ResultView from './ResultView';
@@ -34,6 +35,7 @@ interface Session {
   seasonLabel: string;
   winnerPts: number;
   formationId: string;
+  difficulty: Difficulty;
   seed: string;
   opponents: Opponent[];
 }
@@ -56,6 +58,7 @@ const INITIAL: GameState = {
   seasonLabel: 'All-time',
   winnerPts: 0,
   formationId: '4-3-3',
+  difficulty: 'normal',
   seed: '',
   opponents: [],
   build: null,
@@ -137,10 +140,16 @@ export default function Game() {
   const [state, dispatch] = useReducer(reducer, INITIAL);
   const {
     phase, loading, loadError, mode, seasonId, seasonLabel,
-    winnerPts, formationId, seed, build, result, finalXi,
+    winnerPts, formationId, difficulty, seed, build, result, finalXi,
   } = state;
 
-  async function startSeed(m: BuildMode, sId: string | null, fId: string, seedStr: string) {
+  async function startSeed(
+    m: BuildMode,
+    sId: string | null,
+    fId: string,
+    diff: Difficulty,
+    seedStr: string,
+  ) {
     dispatch({ type: 'LOAD_START' });
     try {
       let label = 'All-time';
@@ -157,6 +166,7 @@ export default function Game() {
         sources = await allTimeSources();
         opp = OPPONENTS;
       }
+      opp = withDifficulty(opp, diff);
       const built = rollDraw(
         createRoll({ seed: seedStr, mode: m, formation: getFormation(fId), sources }),
       );
@@ -168,6 +178,7 @@ export default function Game() {
           seasonLabel: label,
           winnerPts: pts,
           formationId: fId,
+          difficulty: diff,
           seed: seedStr,
           opponents: opp,
         },
@@ -184,7 +195,7 @@ export default function Game() {
 
   function start(o: StartOptions) {
     const rand = o.daily ? dailySeed() : randomSeed();
-    void startSeed(o.mode, o.seasonId, o.formationId, `${o.mode}:${o.seasonId ?? 'all'}:${rand}`);
+    void startSeed(o.mode, o.seasonId, o.formationId, o.difficulty, `${o.mode}:${o.seasonId ?? 'all'}:${rand}`);
   }
 
   // Each screen replaces the page — start at the top (the result hero / the
@@ -193,7 +204,17 @@ export default function Game() {
     window.scrollTo({ top: 0 });
   }, [phase]);
 
-  // Deep-link: ?s=<mode:season:rand>&f=<formation> reproduces the draw sequence.
+  // Persist best score + attempt count once per finished season (keyed on the
+  // result object identity, which is fresh per SIMULATE).
+  const recordedResult = useRef<SeasonResult | null>(null);
+  useEffect(() => {
+    if (phase === 'result' && result && recordedResult.current !== result) {
+      recordedResult.current = result;
+      recordResult(result.points, result.reachedTarget);
+    }
+  }, [phase, result]);
+
+  // Deep-link: ?s=<mode:season:rand>&f=<formation>&d=<difficulty> reproduces the draw.
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const s = params.get('s');
@@ -201,7 +222,9 @@ export default function Game() {
     const [m, sId] = s.split(':');
     if (m !== 'main' && m !== 'challenge') return;
     if (m === 'challenge' && !SEASONS_INDEX.some((x) => x.id === sId)) return;
-    void startSeed(m, m === 'challenge' ? sId : null, params.get('f') || '4-3-3', s);
+    const d = params.get('d');
+    const diff: Difficulty = d === 'hard' || d === 'brutal' ? d : 'normal';
+    void startSeed(m, m === 'challenge' ? sId : null, params.get('f') || '4-3-3', diff, s);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -211,13 +234,15 @@ export default function Game() {
   const onPickInto = (id: string, slotId: string) => dispatch({ type: 'PICK_INTO', id, slotId });
   const onMove = (from: string, to: string) => dispatch({ type: 'MOVE', from, to });
   const onRemove = (slotId: string) => dispatch({ type: 'REMOVE', slotId });
-  const onRestart = () => startSeed(mode, seasonId, formationId, seed);
+  const onRestart = () => startSeed(mode, seasonId, formationId, difficulty, seed);
   const onSimulate = () => dispatch({ type: 'SIMULATE' });
 
   // Deep-link that reproduces the same draw sequence (shared with the scorecard).
   const shareOrigin =
     typeof window !== 'undefined' ? window.location.origin : 'https://runfor101.xyz';
-  const shareUrl = `${shareOrigin}/?s=${encodeURIComponent(seed)}&f=${formationId}`;
+  const shareUrl = `${shareOrigin}/?s=${encodeURIComponent(seed)}&f=${formationId}${
+    difficulty === 'normal' ? '' : `&d=${difficulty}`
+  }`;
 
   // Announce the pivotal game-state changes to screen readers.
   const liveMessage =
