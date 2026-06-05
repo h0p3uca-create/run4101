@@ -80,10 +80,9 @@ export function canPick(state: RollState, player: Player): boolean {
 }
 
 // How hard the roll leans toward stronger squads. weight = strength^DRAW_BIAS,
-// so 0 = uniform; 3 lifts the strongest third's share ~33%→44% (weakest third
-// still ~22%), with the best era ~4× as likely as the weakest. "A bit more
-// strong sides" without burying the minnows.
-export const DRAW_BIAS = 3;
+// so 0 = uniform; 5 lifts the strongest third's share to ~50% (weakest third
+// ~17%) so you mostly draw recognisable sides without burying the minnows.
+export const DRAW_BIAS = 5;
 
 function drawSource(state: RollState): DrawSource {
   // Prefer clubs that actually have a player you can place into an open slot, so

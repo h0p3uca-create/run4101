@@ -36,9 +36,14 @@ const WINDOWS = [
   { id: '20-23', start: 2020, end: 2022 },
 ] as const;
 
-// Keep each era tight & strong: top-N per position (covers any formation with
-// real scarcity, avoids 50-deep union squads).
-const CAPS = { GK: 3, DEF: 10, MID: 10, FWD: 9 } as const;
+// Keep each era tight & strong: top-N per position. Trimmed so the pick list is
+// the recognisable core, not deep filler (every formation still fields with some
+// choice: 3-5-2 needs MID5/DEF3/FWD2, all covered).
+const CAPS = { GK: 2, DEF: 8, MID: 8, FWD: 7 } as const;
+
+// Drop the weakest eras entirely — a pure no-name relegation squad is no fun to
+// draw. (strength = mean of the best 16 ratings; see below.)
+const MIN_ERA_STRENGTH = 64;
 
 const startYear = (seasonId: string) => parseInt(seasonId.slice(0, 4), 10);
 const windowLabel = (id: string) => id.replace('-', '–'); // "05-10" → "05–10"
@@ -124,6 +129,7 @@ for (const [clubId, seasons] of byClub) {
     // (stronger eras come up more often) — see rollbuild.drawSource.
     const top16 = [...capped].sort((a, b) => b.rating - a.rating).slice(0, 16);
     const strength = Math.round(top16.reduce((s, p) => s + p.rating, 0) / top16.length);
+    if (strength < MIN_ERA_STRENGTH) continue; // skip pure no-name squads
 
     sources.push({
       key: `${clubId}|${w.id}`,
