@@ -21,6 +21,7 @@ export default function Pitch({
   targetSlotId,
   highlightSlotIds = [],
   onSlotClick,
+  staggerMs = 0,
 }: {
   formation: Formation;
   placed: Record<string, Player>;
@@ -28,6 +29,8 @@ export default function Pitch({
   targetSlotId?: string | null;
   highlightSlotIds?: string[];
   onSlotClick?: (slotId: string) => void;
+  /** When > 0, placed tokens pop in one-by-one (used on the result reveal). */
+  staggerMs?: number;
 }) {
   const interactive = !!onSlotClick;
   return (
@@ -60,7 +63,7 @@ export default function Pitch({
       <div className="pointer-events-none absolute bottom-3 left-1/2 h-[6%] w-[28%] -translate-x-1/2 rounded-t-sm border-x border-t border-white/20" />
       <div className="pointer-events-none absolute top-3 left-1/2 h-[6%] w-[28%] -translate-x-1/2 rounded-b-sm border-x border-b border-white/20" />
 
-      {formation.lineup.map((slot) => {
+      {formation.lineup.map((slot, i) => {
         const player = placed[slot.id];
         const isSelected = selectedSlotId === slot.id;
         const isTarget = targetSlotId === slot.id;
@@ -99,6 +102,7 @@ export default function Pitch({
                         isSelected || isHighlight
                           ? '0 2px 6px rgba(0,0,0,0.4)'
                           : `0 0 0 2.5px ${RING[codeGroup(slot.pos)]}, 0 2px 6px rgba(0,0,0,0.45)`,
+                      animationDelay: staggerMs ? `${i * staggerMs}ms` : undefined,
                     }
                   : undefined
               }

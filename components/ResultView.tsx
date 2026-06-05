@@ -10,8 +10,8 @@ import Icon from './Icon';
 /** The real record this game chases — City's 100, with 101 as the target. */
 const RECORD_POINTS = 100;
 
-/** Ease a number up from 0 to target on mount (the points reveal). */
-function useCountUp(target: number, ms = 750): number {
+/** Ease a number up from 0 to target on mount (the score reveal). */
+function useCountUp(target: number, ms = 750, decimals = 0): number {
   const [n, setN] = useState(target);
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -19,17 +19,18 @@ function useCountUp(target: number, ms = 750): number {
       setN(target);
       return;
     }
+    const f = 10 ** decimals;
     setN(0);
     let raf = 0;
     const start = performance.now();
     const tick = (t: number) => {
       const p = Math.min(1, (t - start) / ms);
-      setN(Math.round(target * (1 - Math.pow(1 - p, 3))));
+      setN(Math.round(target * (1 - Math.pow(1 - p, 3)) * f) / f);
       if (p < 1) raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [target, ms]);
+  }, [target, ms, decimals]);
   return n;
 }
 
@@ -53,16 +54,37 @@ function summariseScorers(scorers: string[]): string {
     .join(', ');
 }
 
-function Stat({ label, value, accent }: { label: string; value: string; accent?: string }) {
+function Stat({ label, value, accent, signed }: { label: string; value: number; accent?: string; signed?: boolean }) {
+  const shown = useCountUp(value, 700);
   return (
     <div className="flex flex-col items-center justify-center rounded-[var(--radius)] border border-[var(--card-line)] bg-[var(--card)] px-2 py-3">
       <span
         className="text-2xl font-black tabular-nums leading-none sm:text-3xl"
         style={{ fontFamily: 'var(--font-numeral)', color: accent }}
       >
-        {value}
+        {signed && value >= 0 ? '+' : ''}{shown}
       </span>
       <span className="mt-1 text-[10px] uppercase tracking-wider text-[var(--color-muted)]">{label}</span>
+    </div>
+  );
+}
+
+/** Golden-boot row with its goal count ticking up. */
+function ScorerRow({ rank, name, goals, top }: { rank: number; name: string; goals: number; top: boolean }) {
+  const shown = useCountUp(goals, 700);
+  return (
+    <div className="flex items-center gap-3">
+      <span className="w-4 text-center text-xs font-black text-[var(--color-muted)]">{rank}</span>
+      <span className={`flex flex-1 items-center gap-1.5 truncate text-sm ${top ? 'font-bold text-[var(--color-accent)]' : 'font-medium'}`}>
+        {top && <Icon name="crown" />}
+        {name}
+      </span>
+      <span
+        className="rounded-md bg-[color-mix(in_srgb,var(--fg)_8%,transparent)] px-2 py-0.5 text-sm font-black tabular-nums"
+        style={{ fontFamily: 'var(--font-numeral)' }}
+      >
+        {shown}
+      </span>
     </div>
   );
 }
@@ -99,6 +121,8 @@ export default function ResultView({
     return () => cancelAnimationFrame(id);
   }, []);
   const str = teamStrength(xi);
+  const shownAtt = useCountUp(str.attack, 750, 1);
+  const shownDef = useCountUp(str.defense, 750, 1);
   const hit = result.reachedTarget;
   const beatChampion = result.points > winnerPts;
   const scorers = topScorers(result, 3);
@@ -217,7 +241,7 @@ export default function ResultView({
         <div>
           {formation && placed ? (
             <>
-              <Pitch formation={formation} placed={placed} />
+              <Pitch formation={formation} placed={placed} staggerMs={55} />
               <p className="mt-2 text-center text-[11px] font-bold uppercase tracking-widest text-[var(--color-muted)]">
                 Your XI · {formation.label}
               </p>
@@ -245,15 +269,12 @@ export default function ResultView({
               )}
             </div>
             <div className="mt-2 grid grid-cols-3 gap-2">
-              <Stat label="Won" value={String(result.won)} accent="var(--color-accent)" />
-              <Stat label="Drawn" value={String(result.drawn)} />
-              <Stat label="Lost" value={String(result.lost)} accent="var(--color-accent-2)" />
-              <Stat label="GF" value={String(result.goalsFor)} />
-              <Stat label="GA" value={String(result.goalsAgainst)} />
-              <Stat
-                label="GD"
-                value={`${result.goalDifference >= 0 ? '+' : ''}${result.goalDifference}`}
-              />
+              <Stat label="Won" value={result.won} accent="var(--color-accent)" />
+              <Stat label="Drawn" value={result.drawn} />
+              <Stat label="Lost" value={result.lost} accent="var(--color-accent-2)" />
+              <Stat label="GF" value={result.goalsFor} />
+              <Stat label="GA" value={result.goalsAgainst} />
+              <Stat label="GD" value={result.goalDifference} signed />
             </div>
           </div>
 
@@ -261,14 +282,14 @@ export default function ResultView({
           <div className="flex items-center justify-center gap-6 rounded-[var(--radius)] border border-[var(--card-line)] bg-[var(--card)] py-3 text-center">
             <span className="text-xs uppercase tracking-wider text-[var(--color-muted)]">
               Attack{' '}
-              <span className="ml-1 text-lg font-black text-[var(--color-accent-2)]" style={{ fontFamily: 'var(--font-numeral)' }}>
-                {str.attack}
+              <span className="ml-1 text-lg font-black text-[var(--color-accent-2-ink)]" style={{ fontFamily: 'var(--font-numeral)' }}>
+                {shownAtt.toFixed(1)}
               </span>
             </span>
             <span className="text-xs uppercase tracking-wider text-[var(--color-muted)]">
               Defense{' '}
               <span className="ml-1 text-lg font-black text-[var(--color-accent-3)]" style={{ fontFamily: 'var(--font-numeral)' }}>
-                {str.defense}
+                {shownDef.toFixed(1)}
               </span>
             </span>
           </div>
@@ -281,19 +302,7 @@ export default function ResultView({
               </h2>
               <div className="space-y-2">
                 {scorers.map((s, i) => (
-                  <div key={s.name} className="flex items-center gap-3">
-                    <span className="w-4 text-center text-xs font-black text-[var(--color-muted)]">{i + 1}</span>
-                    <span className={`flex flex-1 items-center gap-1.5 truncate text-sm ${i === 0 ? 'font-bold text-[var(--color-accent)]' : 'font-medium'}`}>
-                      {i === 0 && <Icon name="crown" />}
-                      {s.name}
-                    </span>
-                    <span
-                      className="rounded-md bg-[color-mix(in_srgb,var(--fg)_8%,transparent)] px-2 py-0.5 text-sm font-black tabular-nums"
-                      style={{ fontFamily: 'var(--font-numeral)' }}
-                    >
-                      {s.goals}
-                    </span>
-                  </div>
+                  <ScorerRow key={s.name} rank={i + 1} name={s.name} goals={s.goals} top={i === 0} />
                 ))}
               </div>
             </div>
