@@ -299,6 +299,8 @@ export default function Game() {
         <ResultView
           result={result}
           xi={finalXi}
+          formation={build?.formation}
+          placed={build?.placed}
           anonymous={mode === 'main'}
           seasonLabel={seasonLabel}
           winnerPts={winnerPts}
