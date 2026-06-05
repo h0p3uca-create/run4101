@@ -10,7 +10,7 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'sw
 const TITLE = 'Runfor101 — Build a Premier League XI & Beat the 101-Point Record';
 const DESC =
   'Roll a real Premier League club, build your dream XI, and simulate 38 games to chase the 101-point record. A free football management game.';
-const SITE_URL = 'https://runfor101.vercel.app';
+const SITE_URL = 'https://runfor101.xyz';
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),

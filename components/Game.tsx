@@ -224,7 +224,7 @@ export default function Game() {
   async function onShare() {
     if (!result) return;
     const origin =
-      typeof window !== 'undefined' ? window.location.origin : 'https://runfor101.vercel.app';
+      typeof window !== 'undefined' ? window.location.origin : 'https://runfor101.xyz';
     const url = `${origin}/?s=${encodeURIComponent(seed)}&f=${formationId}`;
     const record = `W${result.won} D${result.drawn} L${result.lost} · GD ${result.goalDifference >= 0 ? '+' : ''}${result.goalDifference}`;
     const text = result.reachedTarget
