@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useReducer } from 'react';
 import type { Opponent, Player, SeasonResult } from '@/lib/types';
 import {
   createRoll,
@@ -28,6 +28,112 @@ import Footer from './Footer';
 
 type Phase = 'setup' | 'build' | 'result';
 
+/** Everything needed to seed/label a session, resolved once squads load. */
+interface Session {
+  mode: BuildMode;
+  seasonId: string | null;
+  seasonLabel: string;
+  winnerPts: number;
+  formationId: string;
+  seed: string;
+  opponents: Opponent[];
+}
+
+interface GameState extends Session {
+  phase: Phase;
+  loading: boolean;
+  loadError: string | null;
+  build: RollState | null;
+  result: SeasonResult | null;
+  finalXi: Player[];
+  shared: boolean;
+}
+
+const INITIAL: GameState = {
+  phase: 'setup',
+  loading: false,
+  loadError: null,
+  mode: 'main',
+  seasonId: null,
+  seasonLabel: 'All-time',
+  winnerPts: 0,
+  formationId: '4-3-3',
+  seed: '',
+  opponents: [],
+  build: null,
+  result: null,
+  finalXi: [],
+  shared: false,
+};
+
+type Action =
+  | { type: 'LOAD_START' }
+  | { type: 'LOAD_ERROR'; message: string }
+  | { type: 'SESSION_READY'; session: Session; build: RollState }
+  | { type: 'ROLL' }
+  | { type: 'REROLL' }
+  | { type: 'PICK'; id: string }
+  | { type: 'PICK_INTO'; id: string; slotId: string }
+  | { type: 'MOVE'; from: string; to: string }
+  | { type: 'REMOVE'; slotId: string }
+  | { type: 'SIMULATE' }
+  | { type: 'GOTO_SETUP' }
+  | { type: 'SHARED'; value: boolean };
+
+// Engine calls live INSIDE the reducer, derived from current state — no stale
+// closures, every build transition is a pure function of the prior state.
+function reducer(state: GameState, action: Action): GameState {
+  switch (action.type) {
+    case 'LOAD_START':
+      return { ...state, loading: true, loadError: null };
+    case 'LOAD_ERROR':
+      return { ...state, loading: false, loadError: action.message, phase: 'setup' };
+    case 'SESSION_READY':
+      return {
+        ...state,
+        ...action.session,
+        build: action.build,
+        result: null,
+        shared: false,
+        loading: false,
+        loadError: null,
+        phase: 'build',
+      };
+    case 'ROLL':
+      return state.build ? { ...state, build: rollDraw(state.build) } : state;
+    case 'REROLL':
+      return state.build ? { ...state, build: rerollDraw(state.build) } : state;
+    case 'PICK':
+      return state.build ? { ...state, build: pickPlayer(state.build, action.id) } : state;
+    case 'PICK_INTO':
+      return state.build
+        ? { ...state, build: pickPlayerInto(state.build, action.id, action.slotId) }
+        : state;
+    case 'MOVE':
+      return state.build
+        ? { ...state, build: moveTo(state.build, action.from, action.to) }
+        : state;
+    case 'REMOVE':
+      return state.build ? { ...state, build: removeFrom(state.build, action.slotId) } : state;
+    case 'SIMULATE': {
+      if (!state.build) return state;
+      const xi = lineup(state.build);
+      return {
+        ...state,
+        finalXi: xi,
+        result: simulateSeason(xi, { seed: state.seed, opponents: state.opponents }),
+        phase: 'result',
+      };
+    }
+    case 'GOTO_SETUP':
+      return { ...state, phase: 'setup' };
+    case 'SHARED':
+      return { ...state, shared: action.value };
+    default:
+      return state;
+  }
+}
+
 function randomSeed(): string {
   const c = globalThis.crypto;
   if (c && 'randomUUID' in c) return c.randomUUID().slice(0, 8);
@@ -35,24 +141,14 @@ function randomSeed(): string {
 }
 
 export default function Game() {
-  const [phase, setPhase] = useState<Phase>('setup');
-  const [loading, setLoading] = useState(false);
-  const [loadError, setLoadError] = useState<string | null>(null);
-  const [mode, setMode] = useState<BuildMode>('main');
-  const [seasonId, setSeasonId] = useState<string | null>(null);
-  const [seasonLabel, setSeasonLabel] = useState('All-time');
-  const [winnerPts, setWinnerPts] = useState(0);
-  const [formationId, setFormationId] = useState('4-3-3');
-  const [seed, setSeed] = useState('');
-  const [opponents, setOpponents] = useState<Opponent[]>([]);
-  const [build, setBuild] = useState<RollState | null>(null);
-  const [result, setResult] = useState<SeasonResult | null>(null);
-  const [finalXi, setFinalXi] = useState<Player[]>([]);
-  const [shared, setShared] = useState(false);
+  const [state, dispatch] = useReducer(reducer, INITIAL);
+  const {
+    phase, loading, loadError, mode, seasonId, seasonLabel,
+    winnerPts, formationId, seed, build, result, finalXi, shared,
+  } = state;
 
   async function startSeed(m: BuildMode, sId: string | null, fId: string, seedStr: string) {
-    setLoading(true);
-    setLoadError(null);
+    dispatch({ type: 'LOAD_START' });
     try {
       let label = 'All-time';
       let pts = 0;
@@ -68,23 +164,28 @@ export default function Game() {
         sources = await allTimeSources();
         opp = OPPONENTS;
       }
-      setMode(m);
-      setSeasonId(sId);
-      setSeasonLabel(label);
-      setWinnerPts(pts);
-      setFormationId(fId);
-      setSeed(seedStr);
-      setOpponents(opp);
-      setBuild(rollDraw(createRoll({ seed: seedStr, mode: m, formation: getFormation(fId), sources })));
-      setResult(null);
-      setShared(false);
-      setPhase('build');
+      const built = rollDraw(
+        createRoll({ seed: seedStr, mode: m, formation: getFormation(fId), sources }),
+      );
+      dispatch({
+        type: 'SESSION_READY',
+        session: {
+          mode: m,
+          seasonId: sId,
+          seasonLabel: label,
+          winnerPts: pts,
+          formationId: fId,
+          seed: seedStr,
+          opponents: opp,
+        },
+        build: built,
+      });
     } catch (err) {
       console.error('Failed to start session:', err);
-      setLoadError("Couldn't load the squad data. Check your connection and try again.");
-      setPhase('setup');
-    } finally {
-      setLoading(false);
+      dispatch({
+        type: 'LOAD_ERROR',
+        message: "Couldn't load the squad data. Check your connection and try again.",
+      });
     }
   }
 
@@ -105,22 +206,14 @@ export default function Game() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const onRoll = () => build && setBuild(rollDraw(build));
-  const onReroll = () => build && setBuild(rerollDraw(build));
-  const onPick = (id: string) => build && setBuild(pickPlayer(build, id));
-  const onPickInto = (id: string, slotId: string) =>
-    build && setBuild(pickPlayerInto(build, id, slotId));
-  const onMove = (from: string, to: string) => build && setBuild(moveTo(build, from, to));
-  const onRemove = (slotId: string) => build && setBuild(removeFrom(build, slotId));
-  const onRestart = () => build && startSeed(mode, seasonId, formationId, seed);
-
-  function onSimulate() {
-    if (!build) return;
-    const xi = lineup(build);
-    setFinalXi(xi);
-    setResult(simulateSeason(xi, { seed, opponents }));
-    setPhase('result');
-  }
+  const onRoll = () => dispatch({ type: 'ROLL' });
+  const onReroll = () => dispatch({ type: 'REROLL' });
+  const onPick = (id: string) => dispatch({ type: 'PICK', id });
+  const onPickInto = (id: string, slotId: string) => dispatch({ type: 'PICK_INTO', id, slotId });
+  const onMove = (from: string, to: string) => dispatch({ type: 'MOVE', from, to });
+  const onRemove = (slotId: string) => dispatch({ type: 'REMOVE', slotId });
+  const onRestart = () => startSeed(mode, seasonId, formationId, seed);
+  const onSimulate = () => dispatch({ type: 'SIMULATE' });
 
   function onShare() {
     if (!result) return;
@@ -134,8 +227,8 @@ export default function Game() {
       `Same draws: ${url}`;
     navigator.clipboard?.writeText(text).then(
       () => {
-        setShared(true);
-        setTimeout(() => setShared(false), 2000);
+        dispatch({ type: 'SHARED', value: true });
+        setTimeout(() => dispatch({ type: 'SHARED', value: false }), 2000);
       },
       () => {},
     );
@@ -149,7 +242,7 @@ export default function Game() {
         }`}
       >
         <button
-          onClick={() => setPhase('setup')}
+          onClick={() => dispatch({ type: 'GOTO_SETUP' })}
           aria-label="Gofor101 — back to start"
           className="text-xl font-black tracking-tight"
           style={{ fontFamily: 'var(--font-display)' }}
@@ -209,7 +302,7 @@ export default function Game() {
           anonymous={mode === 'main'}
           seasonLabel={seasonLabel}
           winnerPts={winnerPts}
-          onReplay={() => setPhase('setup')}
+          onReplay={() => dispatch({ type: 'GOTO_SETUP' })}
           onShare={onShare}
           shared={shared}
         />
