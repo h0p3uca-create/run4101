@@ -14,7 +14,8 @@
     "test:watch": "vitest",
     "calibrate": "tsx scripts/calibrate-season.ts",
     "calibrate:eras": "tsx scripts/ingest/calibrate-eras.ts",
-    "build:pool": "tsx scripts/ingest/build-era-pool.ts"
+    "build:pool": "tsx scripts/ingest/build-era-pool.ts",
+    "audit": "tsx scripts/audit-system.ts"
   },
   "dependencies": {
     "next": "16.2.7",
