@@ -61,7 +61,7 @@ console.log(`Era pool: ${pool.length} eras, ${allPlayers.length} players`);
 console.log(`Global-optimal XI strength: att ${optS.attack} def ${optS.defense}\n`);
 
 const N = 600;
-for (const boost of [0, 4, 6, 8, 12]) {
+for (const boost of [0, 1, 2, 3]) {
   const opp = boostedOpponents(boost);
   const optPts = Array.from({ length: N }, (_, i) =>
     simulateSeason(optimal, { seed: `o-${i}`, opponents: opp }).points,

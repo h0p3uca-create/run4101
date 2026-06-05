@@ -13,12 +13,12 @@ interface TierSpec {
   defense: number;
 }
 
-// Main mode now draws buffed club ERAS (peak-window squads), so the XI is
-// stronger than the old season pool. This boost lifts every opponent to match,
-// keeping 101 a rare achievement (a global-optimal XI reaches it ~11% of
-// seasons; see scripts/ingest/calibrate-eras.ts). Engine uses strength
-// DIFFERENCES, so a uniform lift preserves balance while displayed ratings rise.
-const ERA_OPPONENT_BOOST = 6;
+// Main mode draws club ERAS (peak-window squads, with the 90+ cluster thinned
+// so each great era has only ~1–3 elites). This small boost keeps 101 a rare
+// feat: a GLOBAL-optimal XI reaches it ~8% of seasons, random XIs ~0%. The
+// engine keys on strength DIFFERENCES, so a uniform lift preserves balance.
+// Re-tune with: npm run calibrate:eras.
+const ERA_OPPONENT_BOOST = 1;
 
 const TIERS: TierSpec[] = [
   { tier: 'title', attack: 90 + ERA_OPPONENT_BOOST, defense: 88 + ERA_OPPONENT_BOOST },
