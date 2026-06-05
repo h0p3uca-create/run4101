@@ -151,7 +151,12 @@ const ShareCard = forwardRef<
         ) : (
           <span />
         )}
-        <span style={{ display: 'flex', fontSize: 24, color: '#ddd2e4' }}>Beat the 101-point record</span>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+          <span style={{ display: 'flex', fontSize: 24, color: '#ddd2e4' }}>Beat the 101-point record</span>
+          <span style={{ display: 'flex', fontSize: 16, letterSpacing: 3, color: '#a99bb3', textTransform: 'uppercase' }}>
+            Produced by AssistantDevs
+          </span>
+        </div>
       </div>
     </div>
   );

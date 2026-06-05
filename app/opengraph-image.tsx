@@ -126,6 +126,10 @@ export default function OgImage() {
             );
           })}
         </div>
+
+        <div style={{ display: 'flex', fontSize: 22, letterSpacing: 8, color: '#9d8fa8', marginTop: 44 }}>
+          PRODUCED BY ASSISTANTDEVS
+        </div>
       </div>
     ),
     {

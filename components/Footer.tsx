@@ -27,6 +27,9 @@ export default function Footer() {
         </a>{' '}
         (CC0). Names used descriptively under fair use.
       </p>
+      <p className="mt-3 font-semibold uppercase tracking-[0.2em] text-[var(--color-muted)]">
+        Produced by AssistantDevs
+      </p>
     </footer>
   );
 }
