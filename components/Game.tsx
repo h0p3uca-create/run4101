@@ -15,7 +15,6 @@ import {
 } from '@/lib/engine/rollbuild';
 import { simulateSeason } from '@/lib/engine/simulate';
 import { dailySeed } from '@/lib/engine/rng';
-import { TARGET_POINTS } from '@/lib/engine/config';
 import { loadSeason, seasonOpponents, SEASONS_INDEX } from '@/lib/data/seasons';
 import { seasonSources, allTimeSources } from '@/lib/data/pool';
 import { OPPONENTS } from '@/lib/data/opponents';
@@ -46,7 +45,6 @@ interface GameState extends Session {
   build: RollState | null;
   result: SeasonResult | null;
   finalXi: Player[];
-  shared: boolean;
 }
 
 const INITIAL: GameState = {
@@ -63,7 +61,6 @@ const INITIAL: GameState = {
   build: null,
   result: null,
   finalXi: [],
-  shared: false,
 };
 
 type Action =
@@ -77,8 +74,7 @@ type Action =
   | { type: 'MOVE'; from: string; to: string }
   | { type: 'REMOVE'; slotId: string }
   | { type: 'SIMULATE' }
-  | { type: 'GOTO_SETUP' }
-  | { type: 'SHARED'; value: boolean };
+  | { type: 'GOTO_SETUP' };
 
 // Engine calls live INSIDE the reducer, derived from current state — no stale
 // closures, every build transition is a pure function of the prior state.
@@ -94,7 +90,6 @@ function reducer(state: GameState, action: Action): GameState {
         ...action.session,
         build: action.build,
         result: null,
-        shared: false,
         loading: false,
         loadError: null,
         phase: 'build',
@@ -127,8 +122,6 @@ function reducer(state: GameState, action: Action): GameState {
     }
     case 'GOTO_SETUP':
       return { ...state, phase: 'setup' };
-    case 'SHARED':
-      return { ...state, shared: action.value };
     default:
       return state;
   }
@@ -144,7 +137,7 @@ export default function Game() {
   const [state, dispatch] = useReducer(reducer, INITIAL);
   const {
     phase, loading, loadError, mode, seasonId, seasonLabel,
-    winnerPts, formationId, seed, build, result, finalXi, shared,
+    winnerPts, formationId, seed, build, result, finalXi,
   } = state;
 
   async function startSeed(m: BuildMode, sId: string | null, fId: string, seedStr: string) {
@@ -221,36 +214,10 @@ export default function Game() {
   const onRestart = () => startSeed(mode, seasonId, formationId, seed);
   const onSimulate = () => dispatch({ type: 'SIMULATE' });
 
-  async function onShare() {
-    if (!result) return;
-    const origin =
-      typeof window !== 'undefined' ? window.location.origin : 'https://runfor101.xyz';
-    const url = `${origin}/?s=${encodeURIComponent(seed)}&f=${formationId}`;
-    const record = `W${result.won} D${result.drawn} L${result.lost} · GD ${result.goalDifference >= 0 ? '+' : ''}${result.goalDifference}`;
-    const text = result.reachedTarget
-      ? `🏆 ${result.points}/${TARGET_POINTS} — I beat the greatest Premier League season ever on Runfor101.\n${record}\nThink you can beat the same clubs I got? 👇`
-      : `I scored ${result.points}/${TARGET_POINTS} chasing the Premier League record on Runfor101 ⚽\n${record}\nThink you can beat the same clubs I got? 👇`;
-
-    // Prefer the native share sheet (actually sends a link to WhatsApp/X/…).
-    if (typeof navigator !== 'undefined' && 'share' in navigator) {
-      try {
-        await navigator.share({ title: 'Runfor101', text, url });
-        return;
-      } catch (err) {
-        // user dismissed the sheet → done; any other error falls back to copy
-        if ((err as Error)?.name === 'AbortError') return;
-      }
-    }
-
-    // Fallback: copy the score + link to the clipboard.
-    try {
-      await navigator.clipboard?.writeText(`${text} ${url}`);
-      dispatch({ type: 'SHARED', value: true });
-      setTimeout(() => dispatch({ type: 'SHARED', value: false }), 2000);
-    } catch {
-      /* clipboard blocked (insecure context / permissions) — nothing to do */
-    }
-  }
+  // Deep-link that reproduces the same draw sequence (shared with the scorecard).
+  const shareOrigin =
+    typeof window !== 'undefined' ? window.location.origin : 'https://runfor101.xyz';
+  const shareUrl = `${shareOrigin}/?s=${encodeURIComponent(seed)}&f=${formationId}`;
 
   // Announce the pivotal game-state changes to screen readers.
   const liveMessage =
@@ -335,8 +302,7 @@ export default function Game() {
           seasonLabel={seasonLabel}
           winnerPts={winnerPts}
           onReplay={() => dispatch({ type: 'GOTO_SETUP' })}
-          onShare={onShare}
-          shared={shared}
+          shareUrl={shareUrl}
         />
       )}
 

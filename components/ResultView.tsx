@@ -1,11 +1,12 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { Formation, Player, SeasonResult } from '@/lib/types';
 import { TARGET_POINTS } from '@/lib/engine/config';
 import { teamStrength } from '@/lib/engine/ratings';
 import { topScorers } from '@/lib/engine/simulate';
 import Pitch from './Pitch';
 import Icon from './Icon';
+import ShareCard from './ShareCard';
 
 /** The real record this game chases — City's 100, with 101 as the target. */
 const RECORD_POINTS = 100;
@@ -98,8 +99,7 @@ export default function ResultView({
   winnerPts,
   anonymous = false,
   onReplay,
-  onShare,
-  shared,
+  shareUrl,
 }: {
   result: SeasonResult;
   xi: Player[];
@@ -109,10 +109,11 @@ export default function ResultView({
   winnerPts: number;
   anonymous?: boolean;
   onReplay: () => void;
-  onShare: () => void;
-  shared: boolean;
+  shareUrl: string;
 }) {
   const [showMatches, setShowMatches] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [shareState, setShareState] = useState<'idle' | 'working' | 'done'>('idle');
   const shownPoints = useCountUp(result.points);
   // drives the bars filling from 0 on mount
   const [mounted, setMounted] = useState(false);
@@ -137,6 +138,39 @@ export default function ResultView({
     : result.points >= RECORD_POINTS
       ? `${RECORD_POINTS} points — record matched, ${TARGET_POINTS - result.points} off ${TARGET_POINTS}.`
       : `${TARGET_POINTS - result.points} points off the record. Run it back?`;
+
+  // Capture the off-screen scorecard to a PNG and share it (image on mobile,
+  // download + copied link on desktop).
+  async function handleShare() {
+    if (!cardRef.current || shareState === 'working') return;
+    setShareState('working');
+    try {
+      const { toBlob } = await import('html-to-image');
+      const blob = await toBlob(cardRef.current, { pixelRatio: 2, cacheBust: true });
+      if (!blob) throw new Error('capture failed');
+      const file = new File([blob], 'runfor101.png', { type: 'image/png' });
+      const text = `${v.label} — ${result.points}/${TARGET_POINTS} on Runfor101 ⚽ ${shareUrl}`;
+      if (typeof navigator !== 'undefined' && navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ files: [file], text }).catch(() => {});
+      } else {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'runfor101.png';
+        a.click();
+        URL.revokeObjectURL(url);
+        try {
+          await navigator.clipboard?.writeText(shareUrl);
+        } catch {
+          /* clipboard blocked */
+        }
+      }
+      setShareState('done');
+      setTimeout(() => setShareState('idle'), 2500);
+    } catch {
+      setShareState('idle');
+    }
+  }
 
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-6 px-4 py-8">
@@ -347,10 +381,19 @@ export default function ResultView({
       {/* actions */}
       <div className="animate-rise flex flex-col gap-3 sm:flex-row" style={{ animationDelay: '220ms' }}>
         <button
-          onClick={onShare}
-          className="flex-1 rounded-[var(--radius)] border border-[var(--card-line)] px-6 py-3 font-bold transition-colors hover:border-[var(--color-accent)]"
+          onClick={handleShare}
+          disabled={shareState === 'working'}
+          className="flex flex-1 items-center justify-center gap-2 rounded-[var(--radius)] border border-[var(--card-line)] px-6 py-3 font-bold transition-colors enabled:hover:border-[var(--color-accent)] disabled:opacity-60"
         >
-          {shared ? '✓ Copied!' : 'Share score'}
+          {shareState === 'working' ? (
+            'Generating…'
+          ) : shareState === 'done' ? (
+            '✓ Shared'
+          ) : (
+            <>
+              <Icon name="share" /> Share scorecard
+            </>
+          )}
         </button>
         <button
           onClick={onReplay}
@@ -358,6 +401,23 @@ export default function ResultView({
         >
           Play again
         </button>
+      </div>
+
+      {/* off-screen scorecard captured for sharing */}
+      <div
+        aria-hidden
+        style={{ position: 'fixed', left: -99999, top: 0, pointerEvents: 'none', opacity: 0 }}
+      >
+        <ShareCard
+          ref={cardRef}
+          result={result}
+          xi={xi}
+          formation={formation}
+          placed={placed}
+          verdictLabel={v.label}
+          verdictColor={v.color}
+          topScorer={scorers[0]}
+        />
       </div>
     </div>
   );
