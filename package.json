@@ -12,7 +12,9 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "calibrate": "tsx scripts/calibrate-season.ts"
+    "calibrate": "tsx scripts/calibrate-season.ts",
+    "calibrate:eras": "tsx scripts/ingest/calibrate-eras.ts",
+    "build:pool": "tsx scripts/ingest/build-era-pool.ts"
   },
   "dependencies": {
     "next": "16.2.7",

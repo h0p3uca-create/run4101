@@ -1,9 +1,9 @@
 import type { Player, Season } from '../types';
 
-/** A rollable squad: one club in one season. */
+/** A rollable squad: one club-season (challenge) or one club ERA (all-time). */
 export interface DrawSource {
   key: string;
-  /** e.g. "Manchester City" (challenge) or "Man City · 17/18" (all-time). */
+  /** e.g. "Manchester City" (challenge) or "Man Utd · 05–10" (all-time era). */
   label: string;
   squad: Player[];
 }
@@ -18,8 +18,8 @@ export function seasonSources(season: Season): DrawSource[] {
 }
 
 /**
- * Main (all-time) mode: a single pre-built slim pool (one code-split chunk, one
- * request) instead of loading all 22 season files. Built by build-pool.ts.
+ * Main (all-time) mode: a single pre-built slim pool of club ERAS (one
+ * code-split chunk, one request). Built by scripts/ingest/build-era-pool.ts.
  */
 let _pool: DrawSource[] | null = null;
 export async function allTimeSources(): Promise<DrawSource[]> {
