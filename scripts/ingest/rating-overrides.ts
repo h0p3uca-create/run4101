@@ -45,6 +45,22 @@ const ENTRIES: [string, number][] = [
   // ── Anomalies / wrong snapshots: fix (Son is already 89 in data — left as is)
   ['Bruno Fernandes', 88], ['Kasper Schmeichel', 84],
   ['Riyad Mahrez', 89], ['Jamie Vardy', 89], ['Diego Costa', 89],
+  // ── Sub-80 quality players stuck in the FIFA "79 clamp" — up ───────
+  // defenders
+  ['Gary Neville', 84], ['Wesley Fofana', 83], ['Lewis Dunk', 83],
+  ['Steve Finnan', 82], ['Graeme Le Saux', 82], ['Michael Dawson', 82],
+  ['Fabricio Coloccini', 82], ['Conor Coady', 82], ['Takehiro Tomiyasu', 82],
+  ['Fabian Schär', 82], ['Younès Kaboul', 81], ['Matty Cash', 81],
+  ['Aaron Cresswell', 81],
+  // midfielders
+  ['Juan Sebastián Verón', 84], ['Eberechi Eze', 84], ['John McGinn', 83],
+  ['Darren Anderton', 82], ['Conor Gallagher', 82], ['Tom Huddlestone', 81],
+  ['Mathieu Flamini', 81], ['Adel Taarabt', 81], ['Ruben Loftus-Cheek', 81],
+  ['Aaron Mooy', 81], ['Jefferson Lerma', 81], ['Sander Berge', 81],
+  ['Steven Davis', 81],
+  // forwards
+  ['Aleksandar Mitrović', 83], ['Andy Carroll', 82], ['Bobby Zamora', 81],
+  ['Troy Deeney', 81], ['Ashley Barnes', 80], ['Manolo Gabbiadini', 80],
 ];
 
 /** mergeKey → { target, canonical display name } */
