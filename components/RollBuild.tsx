@@ -11,8 +11,10 @@ import {
   placedCount,
 } from '@/lib/engine/rollbuild';
 import { eligible } from '@/lib/engine/positions';
+import { posColor } from '@/lib/ui';
 import Pitch from './Pitch';
 import BoxScore from './BoxScore';
+import RatingBadge from './RatingBadge';
 
 export default function RollBuild({
   state,
@@ -164,10 +166,34 @@ export default function RollBuild({
           </div>
         ) : (
           <div key={state.rollCount} className="animate-slide-in space-y-3">
-            <div className="rounded-2xl bg-[var(--card)] p-4 ring-1 ring-[var(--card-line)]">
-              <p className="text-xs uppercase tracking-widest text-[var(--color-muted)]">Drawn</p>
-              <p className="text-xl font-black leading-tight">{state.drawn.label}</p>
-            </div>
+            {(() => {
+              const [club, era] = state.drawn!.label.split(' · ');
+              return (
+                <div className="relative overflow-hidden rounded-2xl bg-[var(--card)] p-4 pl-5 ring-1 ring-[var(--card-line)]">
+                  <span
+                    className="absolute inset-y-0 left-0 w-1.5"
+                    style={{ background: 'var(--color-accent-2)' }}
+                  />
+                  <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-[var(--color-muted)]">
+                    You drew
+                  </p>
+                  <p className="mt-0.5 text-2xl font-black leading-none">{club}</p>
+                  <div className="mt-2 flex items-center gap-2">
+                    {era && (
+                      <span
+                        className="rounded-full px-2 py-0.5 text-[11px] font-black tabular-nums text-[var(--color-accent-2)] ring-1 ring-[var(--color-accent-2)]"
+                        style={{ fontFamily: 'var(--font-numeral)' }}
+                      >
+                        {era}
+                      </span>
+                    )}
+                    <span className="text-[11px] text-[var(--color-muted)]">
+                      {state.drawn!.squad.length} players
+                    </span>
+                  </div>
+                </div>
+              );
+            })()}
             <button
               data-testid="reroll"
               onClick={onReroll}
@@ -202,22 +228,23 @@ export default function RollBuild({
                       data-testid={`pick-${p.id}`}
                       disabled={!ok}
                       onClick={() => handlePick(p.id)}
-                      className={`flex w-full items-center gap-3 border-b border-[var(--card-line)] px-3 py-2 text-left transition-colors last:border-0 ${
+                      className={`flex w-full items-center gap-2.5 border-b border-[var(--card-line)] py-2 pl-2 pr-3 text-left transition-colors last:border-0 ${
                         ok
-                          ? 'hover:bg-[color-mix(in_srgb,var(--color-accent)_12%,transparent)] cursor-pointer'
+                          ? 'cursor-pointer hover:bg-[color-mix(in_srgb,var(--color-accent)_12%,transparent)]'
                           : 'opacity-30'
                       }`}
                     >
-                      <span className="flex-1 truncate text-sm font-semibold">{p.name}</span>
-                      <span className="text-[9px] font-bold uppercase tracking-wider text-[var(--color-muted)]">
-                        {(p.positions ?? [p.pos]).join('/')}
-                      </span>
                       <span
-                        className="w-7 text-right text-base font-black tabular-nums"
-                        style={{ fontFamily: 'var(--font-numeral)' }}
-                      >
-                        {p.rating}
+                        className="h-8 w-1 shrink-0 rounded-full"
+                        style={{ background: posColor(p.pos) }}
+                      />
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-sm font-bold leading-tight">{p.name}</span>
+                        <span className="text-[9px] font-bold uppercase tracking-wider text-[var(--color-muted)]">
+                          {(p.positions ?? [p.pos]).join(' / ')}
+                        </span>
                       </span>
+                      <RatingBadge rating={p.rating} size="sm" />
                     </button>
                   );
                 })}

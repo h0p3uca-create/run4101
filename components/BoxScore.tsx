@@ -1,4 +1,5 @@
 import type { Formation, Player, TeamStrength } from '@/lib/types';
+import { posColor, ratingTone } from '@/lib/ui';
 
 function Bar({ label, value, color }: { label: string; value: number; color: string }) {
   return (
@@ -54,21 +55,25 @@ export default function BoxScore({
       <ul className="mt-1">
         {formation.lineup.map((slot) => {
           const p = placed[slot.id];
+          const tone = p ? ratingTone(p.rating) : null;
           return (
             <li
               key={slot.id}
-              className="flex items-center gap-3 border-b border-[var(--card-line)] py-2 text-sm"
+              className="flex items-center gap-2.5 border-b border-[var(--card-line)] py-2 text-sm"
             >
-              <span className="w-10 text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)]">
+              <span
+                className="w-9 text-[10px] font-bold uppercase tracking-wider"
+                style={{ color: p ? posColor(p.pos) : 'var(--color-muted)' }}
+              >
                 {slot.pos}
               </span>
               <span className={`flex-1 truncate ${p ? 'font-semibold' : 'text-[var(--color-muted)]'}`}>
                 {p?.name ?? '—'}
               </span>
-              {p && (
+              {p && tone && (
                 <span
-                  className="tabular-nums font-black"
-                  style={{ fontFamily: 'var(--font-numeral)' }}
+                  className="flex h-6 w-6 items-center justify-center rounded-md text-xs font-black tabular-nums"
+                  style={{ background: tone.bg, color: tone.color, fontFamily: 'var(--font-numeral)' }}
                 >
                   {p.rating}
                 </span>
