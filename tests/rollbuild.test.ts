@@ -14,6 +14,7 @@ import {
   lineup,
   placedCount,
   REROLLS,
+  DRAW_COOLDOWN,
   type RollState,
 } from '../lib/engine/rollbuild';
 import { eligible } from '../lib/engine/positions';
@@ -163,6 +164,38 @@ describe('rollbuild · move and swap between eligible slots', () => {
     expect(swapped.placed[b.id].name).toBe(pa.name);
     expect(swapped.placed[a.id].name).toBe(pb.name);
     expect(lineup(swapped)).toHaveLength(11); // nobody dropped
+  });
+});
+
+describe('rollbuild · draw cooldown & uniform odds', () => {
+  it('a drawn club does not reappear within DRAW_COOLDOWN rolls', () => {
+    // Season pool (~20 clubs) ≫ window size, so the cooldown is never relaxed.
+    let s = fresh('4-3-3', 'challenge');
+    const keys: string[] = [];
+    for (let i = 0; i < 15; i++) {
+      s = roll(s);
+      keys.push(s.drawn!.key);
+    }
+    // Every window of DRAW_COOLDOWN+1 consecutive draws must be all-distinct.
+    const w = DRAW_COOLDOWN + 1;
+    for (let i = 0; i + w <= keys.length; i++) {
+      const window = keys.slice(i, i + w);
+      expect(new Set(window).size).toBe(window.length);
+    }
+  });
+
+  it('keeps at most DRAW_COOLDOWN keys in the recency window', () => {
+    let s = fresh('4-3-3', 'main');
+    for (let i = 0; i < 10; i++) s = roll(s);
+    expect(s.recent.length).toBeLessThanOrEqual(DRAW_COOLDOWN);
+    expect(s.recent[s.recent.length - 1]).toBe(s.drawn!.key);
+  });
+
+  it('reroll never returns the club it just rejected', () => {
+    let s = roll(fresh('4-3-3', 'challenge'));
+    const before = s.drawn!.key;
+    s = reroll(s);
+    expect(s.drawn!.key).not.toBe(before);
   });
 });
 

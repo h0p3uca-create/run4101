@@ -13,6 +13,8 @@ import { rngFromSeed, type Rng } from './rng';
 // ─────────────────────────────────────────────────────────────
 
 export const REROLLS = 3;
+/** A drawn club can't reappear for this many subsequent rolls (recency cooldown). */
+export const DRAW_COOLDOWN = 4;
 export type BuildMode = 'challenge' | 'main';
 
 export interface RollState {
@@ -25,6 +27,8 @@ export interface RollState {
   placed: Record<string, Player>;
   takenNames: Set<string>;
   drawn: DrawSource | null;
+  /** Keys of the last few drawn clubs, excluded from the next draw. */
+  recent: string[];
   rerollsLeft: number;
   rollCount: number;
 }
@@ -49,6 +53,7 @@ export function createRoll({
     placed: {},
     takenNames: new Set(),
     drawn: null,
+    recent: [],
     rerollsLeft: REROLLS,
     rollCount: 0,
   };
@@ -79,20 +84,38 @@ function drawSource(state: RollState): DrawSource {
   // every roll is useful (no "drew a club, can't pick anyone" dead ends — matters
   // most for the final scarce position). Falls back to all sources if complete.
   const useful = state.sources.filter((s) => s.squad.some((p) => canPick(state, p)));
-  const pool = useful.length ? useful : state.sources;
+  const base = useful.length ? useful : state.sources;
+  // Recency cooldown: exclude the last few drawn clubs so the same club doesn't
+  // reappear back-to-back. Relax it only if that would leave nothing to draw.
+  const fresh = base.filter((s) => !state.recent.includes(s.key));
+  const pool = fresh.length ? fresh : base;
+  // Uniform odds: every club in the pool is equally likely.
   return pool[Math.floor(state.rng() * pool.length)];
+}
+
+/** Record a freshly drawn club in the recency window (keeps the last DRAW_COOLDOWN). */
+function pushRecent(recent: string[], key: string): string[] {
+  return [...recent, key].slice(-DRAW_COOLDOWN);
 }
 
 export function roll(state: RollState): RollState {
   if (isComplete(state)) return state;
-  return { ...state, drawn: drawSource(state), rollCount: state.rollCount + 1 };
+  const drawn = drawSource(state);
+  return {
+    ...state,
+    drawn,
+    recent: pushRecent(state.recent, drawn.key),
+    rollCount: state.rollCount + 1,
+  };
 }
 
 export function reroll(state: RollState): RollState {
   if (state.rerollsLeft <= 0 || !state.drawn) return state;
+  const drawn = drawSource(state);
   return {
     ...state,
-    drawn: drawSource(state),
+    drawn,
+    recent: pushRecent(state.recent, drawn.key),
     rollCount: state.rollCount + 1,
     rerollsLeft: state.rerollsLeft - 1,
   };
