@@ -43,9 +43,9 @@ export default function BoxScore({
 
   return (
     <aside>
-      <p className="text-xs font-bold uppercase tracking-[0.2em] text-[var(--color-muted)]">
+      <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-[var(--color-muted)]">
         Box Score · <span className="tabular-nums">{filled}/11</span>
-      </p>
+      </h2>
 
       <div className="mt-4 space-y-3 border-b border-[var(--card-line)] pb-4">
         <Bar label="Attack" value={strength.attack} color="var(--color-accent-2)" />

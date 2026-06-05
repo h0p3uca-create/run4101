@@ -4,9 +4,9 @@
 /** Position group → accent colour. */
 export function posColor(pos: string): string {
   switch (pos) {
-    case 'GK': return 'var(--color-accent-2)';
+    case 'GK': return 'var(--color-accent-2-ink)';
     case 'DEF': return 'var(--color-accent-3)';
-    case 'MID': return '#c9b8d6';
+    case 'MID': return 'var(--pos-mid)'; // theme-aware (lavender on dark, darker on paper)
     case 'FWD': return 'var(--color-accent)';
     default: return 'var(--color-muted)';
   }

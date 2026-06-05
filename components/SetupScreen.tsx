@@ -97,7 +97,7 @@ export default function SetupScreen({ onStart }: { onStart: (o: StartOptions) =>
             className="mt-6 w-full rounded-[var(--radius)] bg-[var(--color-accent-2)] px-6 py-5 text-2xl font-black uppercase tracking-wide text-white shadow-[5px_5px_0_var(--color-pl-ink)] transition-transform hover:-translate-y-0.5 active:translate-y-0 sm:w-auto sm:px-12"
             style={{ fontFamily: 'var(--font-head)' }}
           >
-            Roll 🎲
+            Roll <span aria-hidden="true">🎲</span>
           </button>
         </div>
 
@@ -111,6 +111,7 @@ export default function SetupScreen({ onStart }: { onStart: (o: StartOptions) =>
       </div>
 
       {/* How to play */}
+      <h2 className="sr-only">How to play</h2>
       <ol className="mt-12 grid grid-cols-1 gap-3 sm:grid-cols-3">
         {[
           { n: '01', t: 'Roll a club era', d: 'Any club, any decade' },
@@ -135,7 +136,8 @@ export default function SetupScreen({ onStart }: { onStart: (o: StartOptions) =>
           onClick={() => setShowChallenges((s) => !s)}
           className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[var(--color-muted)] hover:text-[var(--fg)]"
         >
-          ⚑ Season challenges <span className="text-[var(--color-accent)]">{showChallenges ? '▴' : '▾'}</span>
+          <span aria-hidden="true">⚑</span> Season challenges{' '}
+          <span className="text-[var(--color-accent)]" aria-hidden="true">{showChallenges ? '▴' : '▾'}</span>
         </button>
 
         {showChallenges && (
@@ -150,7 +152,7 @@ export default function SetupScreen({ onStart }: { onStart: (o: StartOptions) =>
                 className="flex w-full items-center justify-between rounded-[var(--radius)] border border-[var(--color-accent-2)] bg-[color-mix(in_srgb,var(--color-accent-2)_10%,transparent)] px-4 py-3 text-left"
               >
                 <span>
-                  <span className="block text-[10px] uppercase tracking-widest text-[var(--color-accent-2)]">
+                  <span className="block text-[10px] uppercase tracking-widest text-[var(--color-accent-2-ink)]">
                     Today&apos;s Challenge
                   </span>
                   <span className="font-bold">{featured.label}</span>

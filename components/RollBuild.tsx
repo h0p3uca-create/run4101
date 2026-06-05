@@ -111,6 +111,7 @@ export default function RollBuild({
 
   return (
     <div className="mx-auto grid max-w-6xl gap-6 px-4 py-6 md:grid-cols-2 lg:grid-cols-[300px_1fr_260px]">
+      <h1 className="sr-only">Build your XI</h1>
       {/* Left: roll / draw / pick — leads on mobile so ROLL is never below the fold */}
       <div className="order-1 space-y-4">
         <div className="flex items-center justify-between">
@@ -132,11 +133,15 @@ export default function RollBuild({
             )}
           </div>
           <div className="text-right">
-            <p className="text-[10px] uppercase tracking-wider text-[var(--color-muted)]">str</p>
+            <p className="text-[10px] uppercase tracking-wider text-[var(--color-muted)]">Strength</p>
             <p className="font-bold tabular-nums" style={{ fontFamily: 'var(--font-numeral)' }}>
-              <span className="text-[var(--color-accent-2)]">{str.attack || '–'}</span>
-              {' / '}
-              <span className="text-[var(--color-accent-3)]">{str.defense || '–'}</span>
+              <span className="text-[var(--color-accent-2-ink)]" aria-label={`Attack ${str.attack || 0}`}>
+                {str.attack || '–'}
+              </span>
+              <span aria-hidden="true"> / </span>
+              <span className="text-[var(--color-accent-3)]" aria-label={`Defense ${str.defense || 0}`}>
+                {str.defense || '–'}
+              </span>
             </p>
           </div>
         </div>
@@ -161,7 +166,7 @@ export default function RollBuild({
               onClick={onRoll}
               className="group w-full rounded-[var(--radius)] bg-[var(--color-accent-2)] px-6 py-4 text-lg font-black text-white transition-transform hover:-translate-y-0.5"
             >
-              ROLL <span className="dice">🎲</span>
+              ROLL <span className="dice" aria-hidden="true">🎲</span>
             </button>
           </div>
         ) : (
@@ -181,7 +186,7 @@ export default function RollBuild({
                   <div className="mt-2 flex items-center gap-2">
                     {era && (
                       <span
-                        className="rounded-full px-2 py-0.5 text-[11px] font-black tabular-nums text-[var(--color-accent-2)] ring-1 ring-[var(--color-accent-2)]"
+                        className="rounded-full px-2 py-0.5 text-[11px] font-black tabular-nums text-[var(--color-accent-2-ink)] ring-1 ring-[var(--color-accent-2)]"
                         style={{ fontFamily: 'var(--font-numeral)' }}
                       >
                         {era}
@@ -200,7 +205,7 @@ export default function RollBuild({
               disabled={state.rerollsLeft <= 0}
               className="w-full rounded-[var(--radius)] border border-[var(--card-line)] px-4 py-2 text-sm font-bold transition-colors enabled:hover:border-[var(--color-accent)] disabled:opacity-40"
             >
-              ↺ Another club · {state.rerollsLeft} left
+              <span aria-hidden="true">↺</span> Another club · {state.rerollsLeft} left
             </button>
             <div className="flex items-center justify-between pt-1">
               <p className="text-xs uppercase tracking-widest text-[var(--color-muted)]">

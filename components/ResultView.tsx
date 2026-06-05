@@ -85,6 +85,9 @@ export default function ResultView({
 
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-6 px-4 py-8">
+      <h1 className="sr-only">
+        Final standing — {v.label}, {result.points} points
+      </h1>
       {/* ── Hero band ───────────────────────────────────────── */}
       <div
         className={`relative overflow-hidden rounded-2xl border bg-[var(--card)] px-6 py-8 text-center ${
@@ -123,7 +126,7 @@ export default function ResultView({
         </div>
         <p
           className={`relative mt-1 text-sm font-bold ${
-            hit ? 'text-[var(--color-accent)]' : 'text-[var(--color-accent-2)]'
+            hit ? 'text-[var(--color-accent)]' : 'text-[var(--color-accent-2-ink)]'
           }`}
         >
           {headline}
@@ -131,7 +134,14 @@ export default function ResultView({
 
         {/* progress vs the 100/101 record */}
         <div className="relative mx-auto mt-5 max-w-md">
-          <div className="relative h-3 w-full overflow-hidden rounded-full bg-[color-mix(in_srgb,var(--fg)_12%,transparent)]">
+          <div
+            role="progressbar"
+            aria-label={`${result.points} points of ${TARGET_POINTS}, record line at ${RECORD_POINTS}`}
+            aria-valuenow={result.points}
+            aria-valuemin={0}
+            aria-valuemax={TARGET_POINTS}
+            className="relative h-3 w-full overflow-hidden rounded-full bg-[color-mix(in_srgb,var(--fg)_12%,transparent)]"
+          >
             <div
               className="h-full rounded-full transition-all"
               style={{ width: `${pct}%`, background: hit ? 'var(--color-accent)' : 'var(--color-accent-3)' }}
@@ -157,7 +167,7 @@ export default function ResultView({
                 : 'border-[var(--card-line)] text-[var(--color-muted)]'
             }`}
           >
-            {beatChampion ? '🏅' : '○'} {seasonLabel.split('·')[0].trim()} champion: {winnerPts} pts
+            <span aria-hidden="true">{beatChampion ? '🏅' : '○'}</span> {seasonLabel.split('·')[0].trim()} champion: {winnerPts} pts
             <span className="opacity-70">
               {beatChampion
                 ? `— beaten by ${result.points - winnerPts}!`
@@ -189,7 +199,7 @@ export default function ResultView({
         <div className="flex flex-col gap-4">
           {/* W/D/L shape */}
           <div>
-            <div className="flex h-2.5 w-full overflow-hidden rounded-full">
+            <div className="flex h-2.5 w-full overflow-hidden rounded-full" aria-hidden="true">
               {result.won > 0 && (
                 <div style={{ width: `${(result.won / total) * 100}%`, background: 'var(--color-accent)' }} />
               )}
@@ -232,15 +242,15 @@ export default function ResultView({
           {/* golden boot */}
           {scorers.length > 0 && (
             <div className="rounded-[var(--radius)] border border-[var(--card-line)] bg-[var(--card)] p-4">
-              <p className="mb-3 text-center text-[10px] font-bold uppercase tracking-[0.25em] text-[var(--color-muted)]">
-                ⚽ Golden Boot
-              </p>
+              <h2 className="mb-3 text-center text-[10px] font-bold uppercase tracking-[0.25em] text-[var(--color-muted)]">
+                <span aria-hidden="true">⚽</span> Golden Boot
+              </h2>
               <div className="space-y-2">
                 {scorers.map((s, i) => (
                   <div key={s.name} className="flex items-center gap-3">
                     <span className="w-4 text-center text-xs font-black text-[var(--color-muted)]">{i + 1}</span>
                     <span className={`flex-1 truncate text-sm ${i === 0 ? 'font-bold text-[var(--color-accent)]' : 'font-medium'}`}>
-                      {i === 0 && '👑 '}
+                      {i === 0 && <span aria-hidden="true">👑 </span>}
                       {s.name}
                     </span>
                     <span
@@ -283,7 +293,7 @@ export default function ResultView({
               </div>
               {m.scorers.length > 0 && (
                 <p className="truncate pl-7 text-[10px] text-[var(--color-muted)]">
-                  ⚽ {summariseScorers(m.scorers)}
+                  <span aria-hidden="true">⚽</span> {summariseScorers(m.scorers)}
                 </p>
               )}
             </div>

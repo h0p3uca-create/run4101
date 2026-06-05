@@ -72,7 +72,7 @@ export default function Pitch({
               className={`flex h-10 w-10 items-center justify-center rounded-full text-[10px] font-bold transition-all lg:h-11 lg:w-11 ${
                 player
                   ? 'animate-pop-in bg-white text-[#0c101c] shadow-md'
-                  : 'border border-dashed border-white/50 text-white/70'
+                  : 'border border-dashed border-white/70 text-white/85'
               } ${isSelected ? 'ring-2 ring-[var(--color-accent)] ring-offset-2 ring-offset-transparent' : ''} ${
                 isTarget ? 'ring-2 ring-[var(--color-accent)] scale-110 bg-[color-mix(in_srgb,var(--color-accent)_25%,transparent)]' : ''
               } ${

@@ -253,8 +253,20 @@ export default function Game() {
     }
   }
 
+  // Announce the pivotal game-state changes to screen readers.
+  const liveMessage =
+    phase === 'result' && result
+      ? `Full time — ${result.points} points${result.reachedTarget ? ', record broken!' : ''}.`
+      : phase === 'build' && build?.drawn
+        ? `Drew ${build.drawn.label}, ${build.drawn.squad.length} players.`
+        : '';
+
   return (
     <main className="min-h-screen">
+      {/* SR-only running commentary for the roll → result flow */}
+      <div className="sr-only" aria-live="polite">
+        {liveMessage}
+      </div>
       <header
         className={`flex items-center justify-between px-4 py-3 ${
           phase !== 'setup' ? 'border-b-2 border-[var(--fg)]' : ''
@@ -295,7 +307,7 @@ export default function Game() {
           role="alert"
           className="mx-auto mt-4 max-w-6xl px-6"
         >
-          <div className="rounded-[var(--radius)] border border-[var(--color-accent-2)] bg-[color-mix(in_srgb,var(--color-accent-2)_10%,transparent)] px-4 py-3 text-sm font-semibold text-[var(--color-accent-2)]">
+          <div className="rounded-[var(--radius)] border border-[var(--color-accent-2)] bg-[color-mix(in_srgb,var(--color-accent-2)_10%,transparent)] px-4 py-3 text-sm font-semibold text-[var(--color-accent-2-ink)]">
             {loadError}
           </div>
         </div>
