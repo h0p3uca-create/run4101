@@ -105,7 +105,7 @@ export default function SetupScreen({ onStart }: { onStart: (o: StartOptions) =>
         <div className="mx-auto w-full max-w-xs lg:max-w-none">
           <Pitch formation={getFormation('4-3-3')} placed={DREAM_PLACED} />
           <p className="mt-2 text-center text-[11px] text-[var(--color-muted)]">
-            A dream XI — drawn from 24 seasons of real squads
+            A dream XI — drawn from two decades of club eras
           </p>
         </div>
       </div>
@@ -113,7 +113,7 @@ export default function SetupScreen({ onStart }: { onStart: (o: StartOptions) =>
       {/* How to play */}
       <ol className="mt-12 grid grid-cols-1 gap-3 sm:grid-cols-3">
         {[
-          { n: '01', t: 'Roll a club', d: 'Any club from any season' },
+          { n: '01', t: 'Roll a club era', d: 'Any club, any decade' },
           { n: '02', t: 'Pick & place', d: 'Fill the XI by position, slide players around' },
           { n: '03', t: 'Simulate', d: `38 games · reach ${TARGET_POINTS} points` },
         ].map((s) => (

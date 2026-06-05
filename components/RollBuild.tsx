@@ -153,7 +153,7 @@ export default function RollBuild({
           <div className="space-y-3 rounded-2xl border border-dashed border-[var(--card-line)] p-6 text-center">
             <p className="text-sm text-[var(--color-muted)]">
               {state.mode === 'main'
-                ? 'Roll to draw a club from any season'
+                ? 'Roll to draw a club era from any decade'
                 : 'Roll to draw a club from this season'}
             </p>
             <button
