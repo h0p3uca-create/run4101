@@ -33,19 +33,32 @@ export default function Pitch({
   return (
     <div
       aria-hidden={interactive ? undefined : true}
-      className="relative mx-auto aspect-[3/4] w-full max-w-md overflow-hidden rounded-2xl shadow-lg ring-1 ring-black/20 lg:max-w-lg"
+      className="relative mx-auto aspect-[3/4] w-full max-w-md overflow-hidden rounded-2xl shadow-xl ring-1 ring-black/30 lg:max-w-lg"
       style={{
-        backgroundImage:
-          'repeating-linear-gradient(180deg,#0e6b3f 0,#0e6b3f 8.33%,#0c5f37 8.33%,#0c5f37 16.66%)',
+        background:
+          // mowed stripes over a lit base
+          'repeating-linear-gradient(180deg, rgba(255,255,255,0.05) 0 8.33%, rgba(0,0,0,0.05) 8.33% 16.66%), linear-gradient(170deg, #15894f 0%, #0f7341 45%, #0a5733 100%)',
       }}
     >
+      {/* depth: top light + edge vignette */}
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{ background: 'radial-gradient(120% 75% at 50% -10%, rgba(255,255,255,0.10), transparent 55%)' }}
+      />
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{ boxShadow: 'inset 0 0 90px rgba(0,0,0,0.40)' }}
+      />
       {/* pitch markings */}
-      <div className="pointer-events-none absolute inset-3 rounded-lg border border-white/25" />
-      <div className="pointer-events-none absolute left-1/2 top-1/2 h-24 w-24 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/25" />
-      <div className="pointer-events-none absolute left-3 right-3 top-1/2 border-t border-white/25" />
-      {/* penalty boxes */}
-      <div className="pointer-events-none absolute bottom-3 left-1/2 h-[14%] w-[55%] -translate-x-1/2 rounded-t-sm border-x border-t border-white/20" />
-      <div className="pointer-events-none absolute top-3 left-1/2 h-[14%] w-[55%] -translate-x-1/2 rounded-b-sm border-x border-b border-white/20" />
+      <div className="pointer-events-none absolute inset-3 rounded-lg border border-white/30" />
+      <div className="pointer-events-none absolute left-1/2 top-1/2 h-24 w-24 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/30" />
+      <div className="pointer-events-none absolute left-1/2 top-1/2 h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/40" />
+      <div className="pointer-events-none absolute left-3 right-3 top-1/2 border-t border-white/30" />
+      {/* penalty boxes + 6-yard */}
+      <div className="pointer-events-none absolute bottom-3 left-1/2 h-[14%] w-[55%] -translate-x-1/2 rounded-t-sm border-x border-t border-white/25" />
+      <div className="pointer-events-none absolute top-3 left-1/2 h-[14%] w-[55%] -translate-x-1/2 rounded-b-sm border-x border-b border-white/25" />
+      <div className="pointer-events-none absolute bottom-3 left-1/2 h-[6%] w-[28%] -translate-x-1/2 rounded-t-sm border-x border-t border-white/20" />
+      <div className="pointer-events-none absolute top-3 left-1/2 h-[6%] w-[28%] -translate-x-1/2 rounded-b-sm border-x border-b border-white/20" />
 
       {formation.lineup.map((slot) => {
         const player = placed[slot.id];
@@ -71,7 +84,7 @@ export default function Pitch({
               key={player?.id ?? slot.id}
               className={`flex h-10 w-10 items-center justify-center rounded-full text-[10px] font-bold transition-all lg:h-11 lg:w-11 ${
                 player
-                  ? 'animate-pop-in bg-white text-[#0c101c] shadow-md'
+                  ? 'animate-pop-in text-[#0c101c]'
                   : 'border border-dashed border-white/70 text-white/85'
               } ${isSelected ? 'ring-2 ring-[var(--color-accent)] ring-offset-2 ring-offset-transparent' : ''} ${
                 isTarget ? 'ring-2 ring-[var(--color-accent)] scale-110 bg-[color-mix(in_srgb,var(--color-accent)_25%,transparent)]' : ''
@@ -79,8 +92,14 @@ export default function Pitch({
                 isHighlight ? 'ring-2 ring-[var(--color-accent-3)] scale-110' : ''
               }`}
               style={
-                player && !isSelected && !isHighlight
-                  ? { boxShadow: `0 0 0 2px ${RING[codeGroup(slot.pos)]}` }
+                player
+                  ? {
+                      background: 'radial-gradient(circle at 50% 30%, #ffffff, #e9e6ef)',
+                      boxShadow:
+                        isSelected || isHighlight
+                          ? '0 2px 6px rgba(0,0,0,0.4)'
+                          : `0 0 0 2.5px ${RING[codeGroup(slot.pos)]}, 0 2px 6px rgba(0,0,0,0.45)`,
+                    }
                   : undefined
               }
             >

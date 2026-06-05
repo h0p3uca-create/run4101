@@ -1,13 +1,37 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { Formation, Player, SeasonResult } from '@/lib/types';
 import { TARGET_POINTS } from '@/lib/engine/config';
 import { teamStrength } from '@/lib/engine/ratings';
 import { topScorers } from '@/lib/engine/simulate';
 import Pitch from './Pitch';
+import Icon from './Icon';
 
 /** The real record this game chases — City's 100, with 101 as the target. */
 const RECORD_POINTS = 100;
+
+/** Ease a number up from 0 to target on mount (the points reveal). */
+function useCountUp(target: number, ms = 750): number {
+  const [n, setN] = useState(target);
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+      setN(target);
+      return;
+    }
+    setN(0);
+    let raf = 0;
+    const start = performance.now();
+    const tick = (t: number) => {
+      const p = Math.min(1, (t - start) / ms);
+      setN(Math.round(target * (1 - Math.pow(1 - p, 3))));
+      if (p < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [target, ms]);
+  return n;
+}
 
 /** A flavour verdict for the season's points haul. */
 function verdict(points: number, hit: boolean): { label: string; color: string } {
@@ -67,6 +91,7 @@ export default function ResultView({
   shared: boolean;
 }) {
   const [showMatches, setShowMatches] = useState(false);
+  const shownPoints = useCountUp(result.points);
   const str = teamStrength(xi);
   const hit = result.reachedTarget;
   const beatChampion = result.points > winnerPts;
@@ -120,7 +145,7 @@ export default function ResultView({
                 : undefined,
             }}
           >
-            {result.points}
+            {shownPoints}
           </span>
           <span className="pb-3 text-xl font-bold text-[var(--color-muted)]">pts</span>
         </div>
@@ -242,15 +267,15 @@ export default function ResultView({
           {/* golden boot */}
           {scorers.length > 0 && (
             <div className="rounded-[var(--radius)] border border-[var(--card-line)] bg-[var(--card)] p-4">
-              <h2 className="mb-3 text-center text-[10px] font-bold uppercase tracking-[0.25em] text-[var(--color-muted)]">
-                <span aria-hidden="true">⚽</span> Golden Boot
+              <h2 className="mb-3 flex items-center justify-center gap-1.5 text-center text-[10px] font-bold uppercase tracking-[0.25em] text-[var(--color-muted)]">
+                <Icon name="trophy" className="text-[1.4em] text-[var(--color-accent)]" /> Golden Boot
               </h2>
               <div className="space-y-2">
                 {scorers.map((s, i) => (
                   <div key={s.name} className="flex items-center gap-3">
                     <span className="w-4 text-center text-xs font-black text-[var(--color-muted)]">{i + 1}</span>
-                    <span className={`flex-1 truncate text-sm ${i === 0 ? 'font-bold text-[var(--color-accent)]' : 'font-medium'}`}>
-                      {i === 0 && <span aria-hidden="true">👑 </span>}
+                    <span className={`flex flex-1 items-center gap-1.5 truncate text-sm ${i === 0 ? 'font-bold text-[var(--color-accent)]' : 'font-medium'}`}>
+                      {i === 0 && <Icon name="crown" />}
                       {s.name}
                     </span>
                     <span

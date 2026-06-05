@@ -15,6 +15,7 @@ import { posColor } from '@/lib/ui';
 import Pitch from './Pitch';
 import BoxScore from './BoxScore';
 import RatingBadge from './RatingBadge';
+import Icon from './Icon';
 
 export default function RollBuild({
   state,
@@ -164,9 +165,9 @@ export default function RollBuild({
             <button
               data-testid="roll"
               onClick={onRoll}
-              className="group w-full rounded-[var(--radius)] bg-[var(--color-accent-2)] px-6 py-4 text-lg font-black text-white transition-transform hover:-translate-y-0.5"
+              className="group inline-flex w-full items-center justify-center gap-2 rounded-[var(--radius)] bg-[var(--color-accent-2)] px-6 py-4 text-lg font-black text-white transition-transform hover:-translate-y-0.5"
             >
-              ROLL <span className="dice" aria-hidden="true">🎲</span>
+              ROLL <span className="dice"><Icon name="dice" /></span>
             </button>
           </div>
         ) : (
@@ -203,9 +204,9 @@ export default function RollBuild({
               data-testid="reroll"
               onClick={onReroll}
               disabled={state.rerollsLeft <= 0}
-              className="w-full rounded-[var(--radius)] border border-[var(--card-line)] px-4 py-2 text-sm font-bold transition-colors enabled:hover:border-[var(--color-accent)] disabled:opacity-40"
+              className="inline-flex w-full items-center justify-center gap-1.5 rounded-[var(--radius)] border border-[var(--card-line)] px-4 py-2 text-sm font-bold transition-colors enabled:hover:border-[var(--color-accent)] disabled:opacity-40"
             >
-              <span aria-hidden="true">↺</span> Reroll · {state.rerollsLeft} left
+              <Icon name="refresh" /> Reroll · {state.rerollsLeft} left
             </button>
             <div className="flex items-center justify-between pt-1">
               <p className="text-xs uppercase tracking-widest text-[var(--color-muted)]">

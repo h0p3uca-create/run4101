@@ -5,6 +5,7 @@ import { FORMATIONS, getFormation } from '@/lib/data/formations';
 import { SEASONS_INDEX } from '@/lib/data/seasons';
 import { TARGET_POINTS } from '@/lib/engine/config';
 import Pitch from './Pitch';
+import Icon from './Icon';
 
 export type StartMode = 'main' | 'challenge';
 export interface StartOptions {
@@ -97,10 +98,10 @@ export default function SetupScreen({ onStart }: { onStart: (o: StartOptions) =>
           <button
             data-testid="mode-main"
             onClick={() => onStart({ mode: 'main', seasonId: null, formationId, daily: false })}
-            className="mt-6 w-full rounded-[var(--radius)] bg-[var(--color-accent-2)] px-6 py-5 text-2xl font-black uppercase tracking-wide text-white shadow-[5px_5px_0_var(--color-pl-ink)] transition-transform hover:-translate-y-0.5 active:translate-y-0 sm:w-auto sm:px-12"
+            className="mt-6 inline-flex w-full items-center justify-center gap-2.5 rounded-[var(--radius)] bg-[var(--color-accent-2)] px-6 py-5 text-2xl font-black uppercase tracking-wide text-white shadow-[5px_5px_0_var(--color-pl-ink)] transition-transform hover:-translate-y-0.5 active:translate-y-0 sm:w-auto sm:px-12"
             style={{ fontFamily: 'var(--font-head)' }}
           >
-            Roll <span aria-hidden="true">🎲</span>
+            Roll <Icon name="dice" className="text-[0.9em]" />
           </button>
         </div>
 
@@ -139,7 +140,7 @@ export default function SetupScreen({ onStart }: { onStart: (o: StartOptions) =>
           onClick={() => setShowChallenges((s) => !s)}
           className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[var(--color-muted)] hover:text-[var(--fg)]"
         >
-          <span aria-hidden="true">⚑</span> Season challenges{' '}
+          <Icon name="flag" /> Season challenges{' '}
           <span className="text-[var(--color-accent)]" aria-hidden="true">{showChallenges ? '▴' : '▾'}</span>
         </button>
 
