@@ -15,8 +15,8 @@ export interface StartOptions {
   daily: boolean;
 }
 
-// The legendary City–Liverpool title race (98 vs 97 — closest in PL history).
-const FEATURED = '2018-19';
+// Man City's 100-point Centurions — the record this whole game is built to beat.
+const FEATURED = '2017-18';
 
 // Decorative dream XI for the hero pitch.
 const DREAM: Record<string, { name: string; rating: number; pos: Player['pos']; code: string }> = {
@@ -148,13 +148,13 @@ export default function SetupScreen({ onStart }: { onStart: (o: StartOptions) =>
         {showChallenges && (
           <div className="mt-4 animate-fade-in space-y-3">
             <p className="text-xs text-[var(--color-muted)]">
-              Pick a real season and face its actual table — out-point that year&apos;s champion.
+              Face a real season&apos;s actual table — out-point that year&apos;s champion.
             </p>
             {featured && (
               <button
                 data-testid="today-challenge"
                 onClick={() => onStart({ mode: 'challenge', seasonId: FEATURED, formationId, daily: true })}
-                className="flex w-full items-center justify-between rounded-[var(--radius)] border border-[var(--color-accent-2)] bg-[color-mix(in_srgb,var(--color-accent-2)_10%,transparent)] px-4 py-3 text-left"
+                className="flex w-full items-center justify-between rounded-[var(--radius)] border border-[var(--color-accent-2)] bg-[color-mix(in_srgb,var(--color-accent-2)_10%,transparent)] px-4 py-3 text-left transition-transform hover:-translate-y-0.5"
               >
                 <span>
                   <span className="block text-[10px] uppercase tracking-widest text-[var(--color-accent-2-ink)]">
@@ -162,25 +162,13 @@ export default function SetupScreen({ onStart }: { onStart: (o: StartOptions) =>
                   </span>
                   <span className="font-bold">{featured.label}</span>
                   <span className="block text-[11px] text-[var(--color-muted)]">
-                    City vs Liverpool — the closest title race ever
+                    Man City&apos;s record 100 — the bar you&apos;re chasing
                   </span>
                 </span>
                 <span className="shrink-0 text-xs text-[var(--color-muted)]">champ {featured.winnerPts}</span>
               </button>
             )}
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
-              {SEASONS_INDEX.map((s) => (
-                <button
-                  key={s.id}
-                  data-testid={`season-${s.id}`}
-                  onClick={() => onStart({ mode: 'challenge', seasonId: s.id, formationId, daily: false })}
-                  className="flex items-center justify-between rounded-[var(--radius)] border border-[var(--card-line)] px-3 py-2 text-left text-sm transition-colors hover:border-[var(--color-accent)]"
-                >
-                  <span className="truncate font-semibold">{s.label}</span>
-                  <span className="ml-2 text-[10px] text-[var(--color-muted)]">{s.winnerPts}</span>
-                </button>
-              ))}
-            </div>
+            <p className="text-[11px] text-[var(--color-muted)]">More seasons coming soon.</p>
           </div>
         )}
       </div>
