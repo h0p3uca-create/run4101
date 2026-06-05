@@ -14,10 +14,10 @@ function verdict(points: number, hit: boolean): { label: string; color: string }
   if (hit) return { label: 'Record Breakers', color: 'var(--color-accent)' };
   if (points >= 96) return { label: 'Champions', color: 'var(--color-accent)' };
   if (points >= 86) return { label: 'Title Race', color: 'var(--color-accent-3)' };
-  if (points >= 75) return { label: 'Top Four', color: 'var(--color-accent-3)' };
+  if (points >= 75) return { label: 'Europe Calls', color: 'var(--color-accent-3)' };
   if (points >= 64) return { label: 'Mid-Table', color: 'var(--color-muted)' };
-  if (points >= 52) return { label: 'Survival', color: 'var(--color-accent-2)' };
-  return { label: 'Relegated', color: 'var(--color-accent-2)' };
+  if (points >= 52) return { label: 'Great Escape', color: 'var(--color-accent-2-ink)' };
+  return { label: 'Relegated', color: 'var(--color-accent-2-ink)' };
 }
 
 /** ["Salah","Salah","Aguero"] → "Salah (2), Aguero" */
@@ -78,10 +78,10 @@ export default function ResultView({
   const total = result.won + result.drawn + result.lost || 1;
 
   const headline = hit
-    ? '🏆 Record broken — you reached 101!'
+    ? `🏆 ${TARGET_POINTS} points — you beat the greatest season ever.`
     : result.points >= RECORD_POINTS
-      ? `Matched the 100-point mark — ${TARGET_POINTS - result.points} short of the record.`
-      : `${TARGET_POINTS - result.points} points short of the 101 record.`;
+      ? `${RECORD_POINTS} points — record matched, ${TARGET_POINTS - result.points} off ${TARGET_POINTS}.`
+      : `${TARGET_POINTS - result.points} points off the record. Run it back?`;
 
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-6 px-4 py-8">

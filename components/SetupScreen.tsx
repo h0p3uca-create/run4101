@@ -63,10 +63,13 @@ export default function SetupScreen({ onStart }: { onStart: (o: StartOptions) =>
           >
             Roll a club.<br />Build your dream XI.
           </p>
-          <p className="mt-5 max-w-md text-[var(--color-muted)]">
-            Roll the dice: you get a real club from any season. Pick players who were
-            actually there, fill all 11 and simulate — can you reach{' '}
-            <span className="font-bold text-[var(--fg)]">{TARGET_POINTS} points</span>?
+          <p className="mt-4 text-sm font-bold uppercase tracking-wide text-[var(--color-accent)]">
+            The record is 100. Your target is {TARGET_POINTS}.
+          </p>
+          <p className="mt-3 max-w-md text-[var(--color-muted)]">
+            Roll to draw a real club from any season, then pick players who actually
+            played there. Fill all 11, simulate 38 games — can you{' '}
+            <span className="font-bold text-[var(--fg)]">beat the {TARGET_POINTS - 1}-point record</span>?
           </p>
 
           {/* Formation */}
@@ -114,9 +117,9 @@ export default function SetupScreen({ onStart }: { onStart: (o: StartOptions) =>
       <h2 className="sr-only">How to play</h2>
       <ol className="mt-12 grid grid-cols-1 gap-3 sm:grid-cols-3">
         {[
-          { n: '01', t: 'Roll a club era', d: 'Any club, any decade' },
-          { n: '02', t: 'Pick & place', d: 'Fill the XI by position, slide players around' },
-          { n: '03', t: 'Simulate', d: `38 games · reach ${TARGET_POINTS} points` },
+          { n: '01', t: 'Roll a club', d: 'A real club from one season — say Arsenal, 2003-04' },
+          { n: '02', t: 'Pick & place', d: 'Tap a slot, pick a player. Tap a player to move or swap.' },
+          { n: '03', t: 'Simulate', d: `38 games · beat the ${TARGET_POINTS - 1}-point record` },
         ].map((s) => (
           <li key={s.n} className="rounded-[var(--radius)] border border-[var(--card-line)] p-4">
             <div className="text-sm font-black text-[var(--color-accent)]" style={{ fontFamily: 'var(--font-numeral)' }}>
@@ -143,7 +146,7 @@ export default function SetupScreen({ onStart }: { onStart: (o: StartOptions) =>
         {showChallenges && (
           <div className="mt-4 animate-fade-in space-y-3">
             <p className="text-xs text-[var(--color-muted)]">
-              Take on one real season vs that season&apos;s actual clubs — beat their champion.
+              Pick a real season and face its actual table — out-point that year&apos;s champion.
             </p>
             {featured && (
               <button

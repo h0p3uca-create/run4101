@@ -226,11 +226,10 @@ export default function Game() {
     const origin =
       typeof window !== 'undefined' ? window.location.origin : 'https://runfor101.vercel.app';
     const url = `${origin}/?s=${encodeURIComponent(seed)}&f=${formationId}`;
-    const tag = mode === 'challenge' && seasonId ? seasonId : 'all-time';
-    const text =
-      `Runfor101 ${tag} — ${result.points}/${TARGET_POINTS} pts ${result.reachedTarget ? '🏆' : ''}\n` +
-      `W${result.won} D${result.drawn} L${result.lost} · GD ${result.goalDifference >= 0 ? '+' : ''}${result.goalDifference}\n` +
-      `Same draws:`;
+    const record = `W${result.won} D${result.drawn} L${result.lost} · GD ${result.goalDifference >= 0 ? '+' : ''}${result.goalDifference}`;
+    const text = result.reachedTarget
+      ? `🏆 ${result.points}/${TARGET_POINTS} — I beat the greatest Premier League season ever on Runfor101.\n${record}\nThink you can beat the same clubs I got? 👇`
+      : `I scored ${result.points}/${TARGET_POINTS} chasing the Premier League record on Runfor101 ⚽\n${record}\nThink you can beat the same clubs I got? 👇`;
 
     // Prefer the native share sheet (actually sends a link to WhatsApp/X/…).
     if (typeof navigator !== 'undefined' && 'share' in navigator) {
@@ -297,7 +296,7 @@ export default function Game() {
           className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--bg)]/80 backdrop-blur-sm"
         >
           <p className="animate-pulse text-sm uppercase tracking-widest text-[var(--color-muted)]">
-            Drawing squads…
+            Dealing the squads…
           </p>
         </div>
       )}

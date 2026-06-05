@@ -117,7 +117,7 @@ export default function RollBuild({
         <div className="flex items-center justify-between">
           <div>
             <p className="text-xs uppercase tracking-widest text-[var(--color-muted)]">
-              {done ? 'Lineup complete' : `${placedCount(state)}/11 · ${state.formation.label}`}
+              {done ? 'XI complete' : `${placedCount(state)}/11 · ${state.formation.label}`}
             </p>
             <p className="text-sm font-bold">
               {done ? 'Ready' : need ? `Need ${need}` : ''}
@@ -205,7 +205,7 @@ export default function RollBuild({
               disabled={state.rerollsLeft <= 0}
               className="w-full rounded-[var(--radius)] border border-[var(--card-line)] px-4 py-2 text-sm font-bold transition-colors enabled:hover:border-[var(--color-accent)] disabled:opacity-40"
             >
-              <span aria-hidden="true">↺</span> Another club · {state.rerollsLeft} left
+              <span aria-hidden="true">↺</span> Reroll · {state.rerollsLeft} left
             </button>
             <div className="flex items-center justify-between pt-1">
               <p className="text-xs uppercase tracking-widest text-[var(--color-muted)]">

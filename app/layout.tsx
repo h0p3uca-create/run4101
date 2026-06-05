@@ -7,9 +7,9 @@ const anton = Anton({ subsets: ['latin'], weight: '400', variable: '--font-anton
 const archivo = Archivo({ subsets: ['latin'], weight: ['600', '700', '800', '900'], variable: '--font-archivo', display: 'swap' });
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' });
 
-const TITLE = 'Runfor101 — Can you reach 101 points?';
+const TITLE = 'Runfor101 — Build a Premier League XI & Beat the 101-Point Record';
 const DESC =
-  'Draft an all-time Premier League XI, simulate a 38-game season, and chase the 101-point record.';
+  'Roll a real Premier League club, build your dream XI, and simulate 38 games to chase the 101-point record. A free football management game.';
 const SITE_URL = 'https://runfor101.vercel.app';
 
 export const metadata: Metadata = {
