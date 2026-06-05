@@ -79,6 +79,12 @@ export function canPick(state: RollState, player: Player): boolean {
   return eligibleOpenSlots(state, player).length > 0;
 }
 
+// How hard the roll leans toward stronger squads. weight = strength^DRAW_BIAS,
+// so 0 = uniform; 3 lifts the strongest third's share ~33%→44% (weakest third
+// still ~22%), with the best era ~4× as likely as the weakest. "A bit more
+// strong sides" without burying the minnows.
+export const DRAW_BIAS = 3;
+
 function drawSource(state: RollState): DrawSource {
   // Prefer clubs that actually have a player you can place into an open slot, so
   // every roll is useful (no "drew a club, can't pick anyone" dead ends — matters
@@ -89,8 +95,17 @@ function drawSource(state: RollState): DrawSource {
   // reappear back-to-back. Relax it only if that would leave nothing to draw.
   const fresh = base.filter((s) => !state.recent.includes(s.key));
   const pool = fresh.length ? fresh : base;
-  // Uniform odds: every club in the pool is equally likely.
-  return pool[Math.floor(state.rng() * pool.length)];
+
+  // Strength-weighted draw: stronger squads come up more often (but every club
+  // still has a real shot). Falls back to uniform if no strength is present.
+  const weight = (s: DrawSource) => (s.strength == null ? 1 : Math.pow(s.strength, DRAW_BIAS));
+  const total = pool.reduce((sum, s) => sum + weight(s), 0);
+  let r = state.rng() * total;
+  for (const s of pool) {
+    r -= weight(s);
+    if (r <= 0) return s;
+  }
+  return pool[pool.length - 1];
 }
 
 /** Record a freshly drawn club in the recency window (keeps the last DRAW_COOLDOWN). */

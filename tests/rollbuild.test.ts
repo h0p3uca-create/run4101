@@ -197,6 +197,28 @@ describe('rollbuild · draw cooldown & uniform odds', () => {
     s = reroll(s);
     expect(s.drawn!.key).not.toBe(before);
   });
+
+  it('weights the draw toward stronger squads (top third over-represented)', () => {
+    // Strongest third of eras by strength.
+    const byStr = [...ALL_SOURCES].sort((a, b) => (a.strength ?? 0) - (b.strength ?? 0));
+    const topThird = new Set(byStr.slice(Math.floor(byStr.length * (2 / 3))).map((s) => s.key));
+
+    // One continuous rng stream → well-distributed draws.
+    let s = createRoll({
+      seed: 'bias',
+      mode: 'main',
+      formation: getFormation('4-3-3'),
+      sources: ALL_SOURCES,
+    });
+    let hits = 0;
+    const N = 1500;
+    for (let i = 0; i < N; i++) {
+      s = roll(s);
+      if (topThird.has(s.drawn!.key)) hits++;
+    }
+    // Uniform would be ~33%; the bias should lift the strong third well past 40%.
+    expect(hits / N).toBeGreaterThan(0.4);
+  });
 });
 
 describe('rollbuild · reroll budget', () => {

@@ -5,7 +5,15 @@ export interface DrawSource {
   key: string;
   /** e.g. "Manchester City" (challenge) or "Man Utd · 05–10" (all-time era). */
   label: string;
+  /** Appeal score (mean of the best 16 ratings) — weights the roll. */
+  strength?: number;
   squad: Player[];
+}
+
+/** Mean of a squad's best 16 ratings — the draw-weight signal. */
+function squadStrength(squad: Player[]): number {
+  const top = [...squad].sort((a, b) => b.rating - a.rating).slice(0, 16);
+  return Math.round(top.reduce((s, p) => s + p.rating, 0) / Math.max(top.length, 1));
 }
 
 /** Challenge mode: roll among the clubs of one fixed season. */
@@ -13,6 +21,7 @@ export function seasonSources(season: Season): DrawSource[] {
   return season.clubs.map((c) => ({
     key: `${season.id}|${c.id}`,
     label: c.name,
+    strength: squadStrength(c.squad),
     squad: c.squad.map((p) => ({ ...p, club: c.name })),
   }));
 }

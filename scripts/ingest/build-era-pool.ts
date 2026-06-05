@@ -62,7 +62,7 @@ for (const meta of index) {
 }
 
 // 2) for each club × window, aggregate best-season players + buff
-interface EraSource { key: string; label: string; squad: Player[] }
+interface EraSource { key: string; label: string; strength: number; squad: Player[] }
 const sources: EraSource[] = [];
 
 for (const [clubId, seasons] of byClub) {
@@ -120,9 +120,15 @@ for (const [clubId, seasons] of byClub) {
     const have = (pos: string) => capped.filter((p) => p.pos === pos).length;
     if (have('GK') < 1 || have('DEF') < 4 || have('MID') < 3 || have('FWD') < 2) continue;
 
+    // Appeal score = mean of the era's best 16 ratings. Drives weighted rolls
+    // (stronger eras come up more often) — see rollbuild.drawSource.
+    const top16 = [...capped].sort((a, b) => b.rating - a.rating).slice(0, 16);
+    const strength = Math.round(top16.reduce((s, p) => s + p.rating, 0) / top16.length);
+
     sources.push({
       key: `${clubId}|${w.id}`,
       label: `${clubName} · ${wl}`,
+      strength,
       squad: capped,
     });
   }
