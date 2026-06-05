@@ -215,7 +215,7 @@ export default function Game() {
   const onRestart = () => startSeed(mode, seasonId, formationId, seed);
   const onSimulate = () => dispatch({ type: 'SIMULATE' });
 
-  function onShare() {
+  async function onShare() {
     if (!result) return;
     const origin =
       typeof window !== 'undefined' ? window.location.origin : 'https://runfor101.vercel.app';
@@ -224,14 +224,27 @@ export default function Game() {
     const text =
       `Runfor101 ${tag} — ${result.points}/${TARGET_POINTS} pts ${result.reachedTarget ? '🏆' : ''}\n` +
       `W${result.won} D${result.drawn} L${result.lost} · GD ${result.goalDifference >= 0 ? '+' : ''}${result.goalDifference}\n` +
-      `Same draws: ${url}`;
-    navigator.clipboard?.writeText(text).then(
-      () => {
-        dispatch({ type: 'SHARED', value: true });
-        setTimeout(() => dispatch({ type: 'SHARED', value: false }), 2000);
-      },
-      () => {},
-    );
+      `Same draws:`;
+
+    // Prefer the native share sheet (actually sends a link to WhatsApp/X/…).
+    if (typeof navigator !== 'undefined' && 'share' in navigator) {
+      try {
+        await navigator.share({ title: 'Runfor101', text, url });
+        return;
+      } catch (err) {
+        // user dismissed the sheet → done; any other error falls back to copy
+        if ((err as Error)?.name === 'AbortError') return;
+      }
+    }
+
+    // Fallback: copy the score + link to the clipboard.
+    try {
+      await navigator.clipboard?.writeText(`${text} ${url}`);
+      dispatch({ type: 'SHARED', value: true });
+      setTimeout(() => dispatch({ type: 'SHARED', value: false }), 2000);
+    } catch {
+      /* clipboard blocked (insecure context / permissions) — nothing to do */
+    }
   }
 
   return (
