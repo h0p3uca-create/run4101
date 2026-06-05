@@ -1,6 +1,6 @@
 import { ImageResponse } from 'next/og';
 
-export const alt = 'Gofor101 — reach 101 points';
+export const alt = 'Runfor101 — reach 101 points';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 export const dynamic = 'force-static';
@@ -26,7 +26,7 @@ export default function OgImage() {
           Premier League — inspired
         </div>
         <div style={{ display: 'flex', fontSize: 180, fontWeight: 900, marginTop: 10 }}>
-          <span>Gofor</span>
+          <span>Runfor</span>
           <span style={{ color: '#00ff85' }}>101</span>
         </div>
         <div style={{ fontSize: 40, color: '#c9b8d6', marginTop: 10 }}>

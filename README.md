@@ -1,4 +1,4 @@
-# Gofor101
+# Runfor101
 
 A Premier League–_inspired_ league simulator. Draft an all-time XI, simulate a
 38-game season, and chase the **101-point** record (one better than the real

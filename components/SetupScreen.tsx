@@ -55,7 +55,7 @@ export default function SetupScreen({ onStart }: { onStart: (o: StartOptions) =>
             className="mt-3 select-none text-7xl leading-[0.82] sm:text-8xl"
             style={{ fontFamily: 'var(--font-display)', textShadow: '5px 5px 0 var(--color-accent-2)' }}
           >
-            GOFOR<span className="text-[var(--color-accent)]">101</span>
+            RUNFOR<span className="text-[var(--color-accent)]">101</span>
           </h1>
           <p
             className="mt-6 text-4xl leading-[0.95] sm:text-5xl"

@@ -218,11 +218,11 @@ export default function Game() {
   function onShare() {
     if (!result) return;
     const origin =
-      typeof window !== 'undefined' ? window.location.origin : 'https://gofor101.com';
+      typeof window !== 'undefined' ? window.location.origin : 'https://runfor101.com';
     const url = `${origin}/?s=${encodeURIComponent(seed)}&f=${formationId}`;
     const tag = mode === 'challenge' && seasonId ? seasonId : 'all-time';
     const text =
-      `Gofor101 ${tag} — ${result.points}/${TARGET_POINTS} pts ${result.reachedTarget ? '🏆' : ''}\n` +
+      `Runfor101 ${tag} — ${result.points}/${TARGET_POINTS} pts ${result.reachedTarget ? '🏆' : ''}\n` +
       `W${result.won} D${result.drawn} L${result.lost} · GD ${result.goalDifference >= 0 ? '+' : ''}${result.goalDifference}\n` +
       `Same draws: ${url}`;
     navigator.clipboard?.writeText(text).then(
@@ -243,11 +243,11 @@ export default function Game() {
       >
         <button
           onClick={() => dispatch({ type: 'GOTO_SETUP' })}
-          aria-label="Gofor101 — back to start"
+          aria-label="Runfor101 — back to start"
           className="text-xl font-black tracking-tight"
           style={{ fontFamily: 'var(--font-display)' }}
         >
-          GOFOR<span className="text-[var(--color-accent)]">101</span>
+          RUNFOR<span className="text-[var(--color-accent)]">101</span>
         </button>
         <div className="flex items-center gap-4">
           {phase === 'build' && (

@@ -8,7 +8,7 @@ export default function Footer() {
   return (
     <footer className="mx-auto max-w-3xl px-6 py-8 text-center text-[11px] leading-relaxed text-[var(--color-muted)]">
       <p className="font-semibold">
-        Gofor101 — an unofficial, non-commercial fan project.
+        Runfor101 — an unofficial, non-commercial fan project.
       </p>
       <p className="mt-1">
         Not affiliated with, endorsed by, or sponsored by the Premier League,

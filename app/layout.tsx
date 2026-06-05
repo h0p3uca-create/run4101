@@ -7,21 +7,21 @@ const anton = Anton({ subsets: ['latin'], weight: '400', variable: '--font-anton
 const archivo = Archivo({ subsets: ['latin'], weight: ['600', '700', '800', '900'], variable: '--font-archivo', display: 'swap' });
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' });
 
-const TITLE = 'Gofor101 — Can you reach 101 points?';
+const TITLE = 'Runfor101 — Can you reach 101 points?';
 const DESC =
   'Draft an all-time Premier League XI, simulate a 38-game season, and chase the 101-point record.';
-const SITE_URL = 'https://gofor101.com';
+const SITE_URL = 'https://runfor101.com';
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: TITLE,
   description: DESC,
-  applicationName: 'Gofor101',
+  applicationName: 'Runfor101',
   openGraph: {
     title: TITLE,
     description: DESC,
     url: SITE_URL,
-    siteName: 'Gofor101',
+    siteName: 'Runfor101',
     type: 'website',
     locale: 'en_US',
   },

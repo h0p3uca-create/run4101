@@ -2,13 +2,13 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "gofor101",
+      "name": "runfor101",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev"],
       "port": 3000
     },
     {
-      "name": "gofor101-static",
+      "name": "runfor101-static",
       "runtimeExecutable": "npx",
       "runtimeArgs": ["-y", "serve", "out", "-l", "3010"],
       "port": 3010

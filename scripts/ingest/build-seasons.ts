@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────
-// Build real PL season datasets for Gofor101 from ONE consistent source.
+// Build real PL season datasets for Runfor101 from ONE consistent source.
 //
 //   Ratings + positions: stefanoleone "male_players (legacy)" (FIFA 15→23),
 //     mirrored on Hugging Face (jsulz/FIFA23). One file, multi-position.

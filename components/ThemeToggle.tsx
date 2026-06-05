@@ -7,7 +7,7 @@ export default function ThemeToggle() {
   // Restore persisted preference on mount.
   useEffect(() => {
     try {
-      const saved = localStorage.getItem('gofor101-theme');
+      const saved = localStorage.getItem('runfor101-theme');
       if (saved === 'light') setDark(false);
       else if (saved === 'dark') setDark(true);
     } catch {
@@ -18,7 +18,7 @@ export default function ThemeToggle() {
   useEffect(() => {
     document.documentElement.classList.toggle('dark', dark);
     try {
-      localStorage.setItem('gofor101-theme', dark ? 'dark' : 'light');
+      localStorage.setItem('runfor101-theme', dark ? 'dark' : 'light');
     } catch {
       /* ignore persistence failure */
     }

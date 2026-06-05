@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────
-// Core domain types for Gofor101
+// Core domain types for Runfor101
 // ─────────────────────────────────────────────────────────────
 
 export type Position = 'GK' | 'DEF' | 'MID' | 'FWD';
