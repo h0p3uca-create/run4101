@@ -168,7 +168,7 @@ export default function ResultView({
       </div>
 
       {/* ── Two columns: the XI on a pitch · the numbers ─────── */}
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]">
         {/* Left — the XI */}
         <div>
           {formation && placed ? (
@@ -262,7 +262,7 @@ export default function ResultView({
         <button
           onClick={() => setShowMatches((s) => !s)}
           aria-expanded={showMatches}
-          className="self-center text-sm font-semibold text-[var(--color-accent-3)] hover:underline"
+          className="inline-flex min-h-[44px] items-center justify-center self-center text-sm font-semibold text-[var(--color-accent-3)] hover:underline"
         >
           {showMatches ? 'Hide' : 'Show'} all 38 results
         </button>

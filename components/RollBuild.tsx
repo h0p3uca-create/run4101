@@ -110,9 +110,9 @@ export default function RollBuild({
   }
 
   return (
-    <div className="mx-auto grid max-w-6xl gap-6 px-4 py-6 lg:grid-cols-[300px_1fr_260px]">
-      {/* Left: roll / draw / pick */}
-      <div className="order-2 space-y-4 lg:order-1">
+    <div className="mx-auto grid max-w-6xl gap-6 px-4 py-6 md:grid-cols-2 lg:grid-cols-[300px_1fr_260px]">
+      {/* Left: roll / draw / pick — leads on mobile so ROLL is never below the fold */}
+      <div className="order-1 space-y-4">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-xs uppercase tracking-widest text-[var(--color-muted)]">
@@ -125,9 +125,9 @@ export default function RollBuild({
               <button
                 data-testid="restart"
                 onClick={() => { setSelected(null); onRestart(); }}
-                className="mt-0.5 text-[10px] uppercase tracking-wider text-[var(--color-muted)] hover:text-[var(--color-accent-2)]"
+                className="inline-flex min-h-[36px] items-center text-[10px] uppercase tracking-wider text-[var(--color-muted)] hover:text-[var(--color-accent-2)]"
               >
-                ↻ start over
+                <span aria-hidden="true">↻</span>&nbsp;start over
               </button>
             )}
           </div>
@@ -210,9 +210,9 @@ export default function RollBuild({
                 <button
                   data-testid="clear-target"
                   onClick={() => setTargetSlot(null)}
-                  className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-accent)] hover:underline"
+                  className="inline-flex min-h-[32px] items-center text-[10px] font-bold uppercase tracking-wider text-[var(--color-accent)] hover:underline"
                 >
-                  ✕ any slot
+                  <span aria-hidden="true">✕</span>&nbsp;clear slot
                 </button>
               )}
             </div>
@@ -253,8 +253,8 @@ export default function RollBuild({
         )}
       </div>
 
-      {/* Center: the big XI (hero — first on mobile) */}
-      <div className="order-1 space-y-2 lg:order-2 lg:border-l lg:border-[var(--card-line)] lg:pl-6">
+      {/* Center: the big XI */}
+      <div className="order-2 space-y-2 lg:border-l lg:border-[var(--card-line)] lg:pl-6">
         <Pitch
           formation={state.formation}
           placed={state.placed}
@@ -264,17 +264,15 @@ export default function RollBuild({
           onSlotClick={handleSlotClick}
         />
         {selected && state.placed[selected] ? (
-          <div className="flex items-center justify-center gap-2 text-[11px]">
-            <span className="font-semibold">{state.placed[selected].name}</span>
-            <span className="text-[var(--color-muted)]">
-              — tap a glowing slot to move or swap,
-            </span>
+          <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-[11px]">
+            <span className="font-semibold">{state.placed[selected].name} selected</span>
+            <span className="text-[var(--color-muted)]">— tap a glowing slot to move or swap, or</span>
             <button
               data-testid="remove"
               onClick={() => { onRemove(selected); setSelected(null); }}
-              className="rounded-full border border-[var(--color-accent-2)] px-2 py-0.5 font-semibold text-[var(--color-accent-2)] hover:bg-[color-mix(in_srgb,var(--color-accent-2)_12%,transparent)]"
+              className="inline-flex min-h-[36px] items-center rounded-full border border-[var(--color-accent-2)] px-3 font-semibold text-[var(--color-accent-2)] hover:bg-[color-mix(in_srgb,var(--color-accent-2)_12%,transparent)]"
             >
-              ✕ remove
+              <span aria-hidden="true">✕</span>&nbsp;remove
             </button>
           </div>
         ) : targetSlotObj ? (
@@ -290,7 +288,7 @@ export default function RollBuild({
       </div>
 
       {/* Right: box score */}
-      <div className="order-3 lg:border-l lg:border-[var(--card-line)] lg:pl-6">
+      <div className="order-3 md:col-span-2 lg:col-span-1 lg:border-l lg:border-[var(--card-line)] lg:pl-6">
         <BoxScore formation={state.formation} placed={state.placed} strength={str} />
       </div>
     </div>

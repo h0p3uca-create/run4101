@@ -78,7 +78,7 @@ export default function SetupScreen({ onStart }: { onStart: (o: StartOptions) =>
               <button
                 key={f.id}
                 onClick={() => setFormationId(f.id)}
-                className={`rounded-full border px-3 py-1 text-sm font-bold tabular-nums transition-colors ${
+                className={`inline-flex min-h-[40px] items-center rounded-full border px-4 text-sm font-bold tabular-nums transition-colors ${
                   formationId === f.id
                     ? 'border-[var(--color-accent)] bg-[color-mix(in_srgb,var(--color-accent)_14%,transparent)]'
                     : 'border-[var(--card-line)] text-[var(--color-muted)] hover:text-[var(--fg)]'

@@ -33,10 +33,21 @@ export const metadata: Metadata = {
   icons: { icon: '/favicon.ico' },
 };
 
+// Runs before paint: honour a saved Light preference so there's no dark→light
+// flash (the SSR default below is dark).
+const THEME_INIT = `try{if(localStorage.getItem('runfor101-theme')==='light')document.documentElement.classList.remove('dark')}catch(e){}`;
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${anton.variable} ${archivo.variable} ${inter.variable}`}>
-      <body>{children}</body>
+    <html
+      lang="en"
+      className={`dark ${anton.variable} ${archivo.variable} ${inter.variable}`}
+      suppressHydrationWarning
+    >
+      <body>
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT }} />
+        {children}
+      </body>
     </html>
   );
 }

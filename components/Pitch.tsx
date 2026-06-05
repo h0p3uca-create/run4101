@@ -69,7 +69,7 @@ export default function Pitch({
           >
             <span
               key={player?.id ?? slot.id}
-              className={`flex h-11 w-11 items-center justify-center rounded-full text-[10px] font-bold transition-all ${
+              className={`flex h-10 w-10 items-center justify-center rounded-full text-[10px] font-bold transition-all lg:h-11 lg:w-11 ${
                 player
                   ? 'animate-pop-in bg-white text-[#0c101c] shadow-md'
                   : 'border border-dashed border-white/50 text-white/70'
@@ -96,8 +96,8 @@ export default function Pitch({
               )}
             </span>
             <span
-              className={`max-w-[72px] truncate rounded px-1 text-[9px] font-bold uppercase tracking-wide ${
-                player ? 'bg-black/40 text-white' : 'text-white/60'
+              className={`max-w-[52px] truncate rounded px-1 text-[8px] font-bold uppercase tracking-wide lg:max-w-[72px] lg:text-[9px] ${
+                player ? 'bg-black/40 text-white' : 'text-white/75'
               }`}
             >
               {player ? lastName(player.name) : slot.pos}

@@ -194,6 +194,12 @@ export default function Game() {
     void startSeed(o.mode, o.seasonId, o.formationId, `${o.mode}:${o.seasonId ?? 'all'}:${rand}`);
   }
 
+  // Each screen replaces the page — start at the top (the result hero / the
+  // roll panel should never open mid-scroll, esp. on mobile).
+  useEffect(() => {
+    window.scrollTo({ top: 0 });
+  }, [phase]);
+
   // Deep-link: ?s=<mode:season:rand>&f=<formation> reproduces the draw sequence.
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
